@@ -8,6 +8,8 @@ Länk till slutversionens commit, fylls i vid inlämningen:
 - Teammedlemmar och GitHub-användarnamn:
 - Teamets fork:
 
-## Underlag
+## Gruppens underlag
 
-Länkar till teamets dokumentation och varje students namngivna individuella underlag:
+Länkar till teamets gemensamma dokumentation:
+
+Individuella redovisningar lämnas som Markdown-filer (.md) i Disco och ska inte läggas i repositoryt eller länkas här.
