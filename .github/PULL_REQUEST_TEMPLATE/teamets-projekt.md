@@ -4,9 +4,13 @@ Länk till slutversionens commit, fylls i vid inlämningen:
 
 ## Teamet
 
-- Teamnamn:
+- Teamnamn: Grupp 4
 - Teammedlemmar och GitHub-användarnamn:
-- Teamets fork:
+  - Linus Huzell [LinusHuzell](https://github.com/LinusHuzell)
+  - Louice Borg
+  - Carolina Hagman
+  - Sebastian Bennett
+- Teamets fork: https://github.com/LinusHuzell/kundportal-ai-native-development
 
 ## Gruppens underlag
 
