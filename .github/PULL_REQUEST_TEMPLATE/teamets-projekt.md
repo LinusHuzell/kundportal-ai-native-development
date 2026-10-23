@@ -15,5 +15,6 @@ Länk till slutversionens commit, fylls i vid inlämningen:
 ## Gruppens underlag
 
 Länkar till teamets gemensamma dokumentation:
+- [Avgränsning, teknikval, arbetsfördelning](docs/avgränsningar.md)
 
 Individuella redovisningar lämnas som Markdown-filer (.md) i Disco och ska inte läggas i repositoryt eller länkas här.
