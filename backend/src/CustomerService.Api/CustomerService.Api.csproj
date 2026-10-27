@@ -9,7 +9,7 @@
   <!-- Opt-in: dotnet build -p:GenerateOpenApi=true (see backend/README.md) -->
   <PropertyGroup Condition="'$(GenerateOpenApi)' == 'true'">
     <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
-    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../../docs</OpenApiDocumentsDirectory>
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../../docs/api</OpenApiDocumentsDirectory>
     <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
 

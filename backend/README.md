@@ -1,6 +1,6 @@
 # Customer Service API
 
-ASP.NET Core API for the Customer Service Portal. The ticket endpoints are defined according to [docs/api-kontrakt.md](../docs/api-kontrakt.md), but their handlers are stubs that return `501 Not Implemented` until persistence is added.
+ASP.NET Core API for the Customer Service Portal. The ticket endpoints are defined according to [docs/api/kontrakt.md](../docs/api/kontrakt.md), but their handlers are stubs that return `501 Not Implemented` until persistence is added.
 
 ## Requirements
 
@@ -35,7 +35,7 @@ The specification is generated from the code (endpoints and request/response typ
 dotnet build src/CustomerService.Api -p:GenerateOpenApi=true
 ```
 
-This writes `docs/openapi.json`. Regenerate and commit it whenever the API changes, and keep `docs/api-kontrakt.md` in sync.
+This writes `docs/api/openapi.json`. Regenerate and commit it whenever the API changes, and keep `docs/api/kontrakt.md` in sync.
 
 ## HTTPS development certificate
 
