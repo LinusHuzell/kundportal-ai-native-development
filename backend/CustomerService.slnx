@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/e2e/">
+    <Project Path="e2e/CustomerService.Api.E2E/CustomerService.Api.E2E.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/CustomerService.Api/CustomerService.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CustomerService.Api.UnitTests/CustomerService.Api.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -4,6 +4,8 @@ A small customer service portal where a case handler can register a ticket, see 
 
 > The original course README (assignment setup, fork and PR instructions) is kept in [`course-info/README.md`](course-info/README.md).
 
+See [docs/gotchas.md](docs/gotchas.md) for development gotchas and team conventions.
+
 ## Team
 
 - Linus Huzell ([LinusHuzell](https://github.com/LinusHuzell))
