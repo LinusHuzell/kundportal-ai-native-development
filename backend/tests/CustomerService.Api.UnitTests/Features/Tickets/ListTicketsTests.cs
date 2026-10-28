@@ -59,6 +59,54 @@ public sealed class ListTicketsTests
         Assert.Empty(tickets);
     }
 
+    [Fact]
+    public async Task GetTicketReturnsTicketForExistingId()
+    {
+        var ticket = CreateTicket(42, "Site access lift inspection", DateTimeOffset.UtcNow);
+        await using var factory = await TicketApiFactory.CreateAsync(ticket);
+
+        using var response = await factory.Client.GetAsync("/api/tickets/42");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<TicketResponse>(JsonOptions);
+        Assert.NotNull(result);
+        Assert.Equal(ticket.Id, result.Id);
+        Assert.Equal(ticket.Title, result.Title);
+        Assert.Equal(ticket.Status, result.Status);
+    }
+
+    [Fact]
+    public async Task GetTicketReturnsNotFoundForUnknownId()
+    {
+        await using var factory = await TicketApiFactory.CreateAsync();
+
+        using var response = await factory.Client.GetAsync("/api/tickets/42");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateTicketStatusPersistsAndReturnsUpdatedTicket()
+    {
+        var ticket = CreateTicket(42, "Site access lift inspection", DateTimeOffset.UtcNow);
+        await using var factory = await TicketApiFactory.CreateAsync(ticket);
+
+        using var response = await factory.Client.PutAsJsonAsync(
+            "/api/tickets/42/status",
+            new UpdateStatusRequest(TicketStatus.InProgress),
+            JsonOptions);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<TicketResponse>(JsonOptions);
+        Assert.NotNull(result);
+        Assert.Equal(TicketStatus.InProgress, result.Status);
+
+        using var getResponse = await factory.Client.GetAsync("/api/tickets/42");
+        var updatedTicket = await getResponse.Content.ReadFromJsonAsync<TicketResponse>(JsonOptions);
+        Assert.NotNull(updatedTicket);
+        Assert.Equal(TicketStatus.InProgress, updatedTicket.Status);
+    }
+
     private static Ticket CreateTicket(int id, string title, DateTimeOffset createdAt) => new()
     {
         Id = id,

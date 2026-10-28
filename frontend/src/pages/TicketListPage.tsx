@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ApiError, api } from '../api/client'
 import type { Ticket, TicketPriority, TicketStatus } from '../types/ticket'
 
@@ -127,29 +128,34 @@ export default function TicketListPage() {
 
 function TicketRow({ ticket }: { ticket: Ticket }) {
   return (
-    <li className="grid gap-4 px-5 py-4 transition-colors hover:bg-[#16283D] md:grid-cols-[minmax(0,1.8fr)_0.8fr_1.1fr_0.9fr] md:items-center">
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-[#2FB1A5]">Ticket #{ticket.id}</p>
-        <h2 className="mt-1 break-words text-sm font-semibold text-white">{ticket.title}</h2>
-      </div>
-      <div className="flex items-center justify-between gap-3 md:block">
-        <span className="text-xs text-[#7E8B9A] md:hidden">Priority</span>
-        <span className={`rounded px-2.5 py-1 text-xs font-semibold ${priorityStyles[ticket.priority]}`}>
-          {ticket.priority}
-        </span>
-      </div>
-      <div className="flex items-center justify-between gap-3 md:block">
-        <span className="text-xs text-[#7E8B9A] md:hidden">Status</span>
-        <span className={`rounded px-2.5 py-1 text-xs font-semibold ${statusStyles[ticket.status]}`}>
-          {statusLabels[ticket.status]}
-        </span>
-      </div>
-      <div className="flex items-center justify-between gap-3 md:block">
-        <span className="text-xs text-[#7E8B9A] md:hidden">Created</span>
-        <time dateTime={ticket.createdAt} className="text-sm text-[#AAB6C5]">
-          {formatDate(ticket.createdAt)}
-        </time>
-      </div>
+    <li>
+      <Link
+        to={`/tickets/${ticket.id}`}
+        className="grid gap-4 px-5 py-4 transition-colors hover:bg-[#16283D] focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#2FB1A5] md:grid-cols-[minmax(0,1.8fr)_0.8fr_1.1fr_0.9fr] md:items-center"
+      >
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-[#2FB1A5]">Ticket #{ticket.id}</p>
+          <h2 className="mt-1 break-words text-sm font-semibold text-white">{ticket.title}</h2>
+        </div>
+        <div className="flex items-center justify-between gap-3 md:block">
+          <span className="text-xs text-[#7E8B9A] md:hidden">Priority</span>
+          <span className={`rounded px-2.5 py-1 text-xs font-semibold ${priorityStyles[ticket.priority]}`}>
+            {ticket.priority}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3 md:block">
+          <span className="text-xs text-[#7E8B9A] md:hidden">Status</span>
+          <span className={`rounded px-2.5 py-1 text-xs font-semibold ${statusStyles[ticket.status]}`}>
+            {statusLabels[ticket.status]}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3 md:block">
+          <span className="text-xs text-[#7E8B9A] md:hidden">Created</span>
+          <time dateTime={ticket.createdAt} className="text-sm text-[#AAB6C5]">
+            {formatDate(ticket.createdAt)}
+          </time>
+        </div>
+      </Link>
     </li>
   )
 }

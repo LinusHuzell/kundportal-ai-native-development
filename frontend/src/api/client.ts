@@ -31,11 +31,30 @@ export const api = {
 
     return response.json() as Promise<Ticket[]>
   },
-  getTicket: async (_id: number): Promise<Ticket> => notImplemented('getTicket'),
+  getTicket: async (id: number): Promise<Ticket> => {
+    const response = await fetch(`${API_BASE_URL}/tickets/${id}`)
+
+    if (!response.ok) {
+      throw new ApiError(`Unable to load ticket (HTTP ${response.status}).`, response.status)
+    }
+
+    return response.json() as Promise<Ticket>
+  },
   createTicket: async (_input: CreateTicketInput): Promise<Ticket> =>
     notImplemented('createTicket'),
   updateTicket: async (_id: number, _input: UpdateTicketInput): Promise<Ticket> =>
     notImplemented('updateTicket'),
-  updateTicketStatus: async (_id: number, _status: TicketStatus): Promise<Ticket> =>
-    notImplemented('updateTicketStatus'),
+  updateTicketStatus: async (id: number, status: TicketStatus): Promise<Ticket> => {
+    const response = await fetch(`${API_BASE_URL}/tickets/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    })
+
+    if (!response.ok) {
+      throw new ApiError(`Unable to update ticket status (HTTP ${response.status}).`, response.status)
+    }
+
+    return response.json() as Promise<Ticket>
+  },
 }

@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using CustomerService.Api.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CustomerService.Api.Features.Tickets;
 
@@ -14,7 +16,32 @@ public static class UpdateTicketStatus
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-    // Stub until persistence exists.
-    private static IResult Handle(int id, UpdateStatusRequest request) =>
-        Results.StatusCode(StatusCodes.Status501NotImplemented);
+    private static async Task<IResult> Handle(
+        int id,
+        UpdateStatusRequest request,
+        ApplicationDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var ticket = await dbContext.Tickets
+            .SingleOrDefaultAsync(ticket => ticket.Id == id, cancellationToken);
+
+        if (ticket is null)
+        {
+            return Results.NotFound();
+        }
+
+        ticket.Status = request.Status;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Results.Ok(new TicketResponse(
+            ticket.Id,
+            ticket.Title,
+            ticket.Description,
+            ticket.Category,
+            ticket.Priority,
+            ticket.Status,
+            ticket.CustomerName,
+            ticket.CustomerEmail,
+            ticket.CreatedAt));
+    }
 }
