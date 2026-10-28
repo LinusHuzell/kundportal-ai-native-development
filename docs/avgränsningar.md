@@ -7,12 +7,16 @@
 * **Frontend:** React, Tailwind
 * **Design:** Figma
 * **Tester:** Playwright
+* **API-dokumentation:** OpenAPI (inbyggt i .NET) med Scalar som gränssnitt
+* **Transport:** Alltid HTTPS, även lokalt
 
 ### Motivering
 * Backend, frontend och databas valdes utifrån kompetens i gruppen
 * Docker valdes eftersom gruppen kör olika operativsystem
 * Playwright valdes för att gruppen är nyfiken på att testa
 * Figma valdes för att ha en source of truth för designval
+* HTTPS körs alltid, även lokalt, så att utvecklingsmiljön beter sig som produktion och kunduppgifter (namn, email) aldrig skickas i klartext
+* OpenAPI genereras från koden så att specen följer implementationen. Scalar valdes som gränssnitt eftersom .NET 9+ inte längre levererar Swagger UI med mallarna; Scalar är ett aktivt underhållet alternativ som läser samma OpenAPI-dokument och låter oss testa endpoints i webbläsaren
 
 ---
 

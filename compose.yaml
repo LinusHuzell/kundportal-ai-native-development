@@ -1,0 +1,47 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "127.0.0.1:7289:7289"
+    volumes:
+      - ./backend/src/CustomerService.Api:/app/src/CustomerService.Api
+      - ./.certs:/certs:ro
+      # Keep Linux build output in the container, not mixed with the host's bin/obj.
+      - /app/src/CustomerService.Api/bin
+      - /app/src/CustomerService.Api/obj
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/7289'"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      DEV_HTTPS: "true"
+      DEV_CERT_DIR: /certs
+      # Vite proxies /api to this address (see vite.config.ts).
+      API_PROXY_TARGET: https://backend:7289
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - ./.certs:/certs:ro
+      # Keep Linux-built node_modules in the container.
+      - /app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  e2e:
+    profiles: ["test"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.e2e
+    environment:
+      DEV_HTTPS: "true"
+      PLAYWRIGHT_BASE_URL: https://frontend:5173
+    depends_on:
+      frontend:
+        condition: service_started
