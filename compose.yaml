@@ -2,14 +2,15 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8080:8080"
+      - "127.0.0.1:7289:7289"
     volumes:
       - ./backend/src/CustomerService.Api:/app/src/CustomerService.Api
+      - ./.certs:/certs:ro
       # Keep Linux build output in the container, not mixed with the host's bin/obj.
       - /app/src/CustomerService.Api/bin
       - /app/src/CustomerService.Api/obj
     healthcheck:
-      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080'"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/7289'"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -22,7 +23,7 @@ services:
       DEV_HTTPS: "true"
       DEV_CERT_DIR: /certs
       # Vite proxies /api to this address (see vite.config.ts).
-      API_PROXY_TARGET: http://backend:8080
+      API_PROXY_TARGET: https://backend:7289
       CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ./frontend:/app

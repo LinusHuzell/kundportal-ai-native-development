@@ -9,9 +9,11 @@ RUN dotnet restore
 
 COPY src/CustomerService.Api/ ./
 
-EXPOSE 8080
+EXPOSE 7289
 # --non-interactive: no prompts in a container. Polling: file events are unreliable on bind mounts (macOS/Windows).
-ENV ASPNETCORE_HTTP_PORTS=8080 \
+ENV ASPNETCORE_URLS=https://+:7289 \
+    ASPNETCORE_Kestrel__Certificates__Default__Path=/certs/localhost.pem \
+    ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/certs/localhost.key \
     ASPNETCORE_ENVIRONMENT=Development \
     DOTNET_USE_POLLING_FILE_WATCHER=true
 CMD ["dotnet", "watch", "run", "--non-interactive", "--no-launch-profile"]

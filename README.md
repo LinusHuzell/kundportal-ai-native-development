@@ -26,7 +26,7 @@ docker compose up -d
 
 ### Navigate to:
 Frontend: https://localhost:5173/tickets
-Backend (Scalar): http://localhost:8080/scalar/v1
+Backend (Scalar): https://localhost:7289/scalar/v1
 OpenAPI-specifikation: [docs/api/openapi.json](docs/api/openapi.json)
 
 ## Running the frontend

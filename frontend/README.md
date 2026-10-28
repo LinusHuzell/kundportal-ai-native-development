@@ -27,6 +27,7 @@ Requires Node 22+.
 | `npm run test:e2e`   | Playwright tests in `e2e/`     |
 
 First time running e2e tests: `npx playwright install chromium`.
+When Docker Compose is running, use `DEV_HTTPS=true npm run test:e2e` so Playwright reuses its HTTPS frontend.
 
 ## Structure
 

@@ -440,14 +440,6 @@
         }
       },
       "UpdateTicketRequest": {
-        "required": [
-          "title",
-          "description",
-          "category",
-          "priority",
-          "customerName",
-          "customerEmail"
-        ],
         "type": "object",
         "properties": {
           "title": {
