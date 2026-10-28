@@ -49,6 +49,11 @@ services:
       - ./.certs:/certs:ro
       # Keep Linux-built node_modules in the container.
       - /app/node_modules
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('https').get('https://127.0.0.1:5173', { rejectUnauthorized: false }, res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     depends_on:
       backend:
         condition: service_healthy
@@ -63,7 +68,7 @@ services:
       PLAYWRIGHT_BASE_URL: https://frontend:5173
     depends_on:
       frontend:
-        condition: service_started
+        condition: service_healthy
 
 volumes:
   postgres-data:
