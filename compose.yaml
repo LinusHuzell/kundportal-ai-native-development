@@ -1,14 +1,33 @@
 services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: customer_service
+      POSTGRES_USER: customer_service
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-customer-service-dev}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U customer_service -d customer_service"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   backend:
     build: ./backend
     ports:
       - "127.0.0.1:7289:7289"
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=database;Port=5432;Database=customer_service;Username=customer_service;Password=${POSTGRES_PASSWORD:-customer-service-dev}"
     volumes:
       - ./backend/src/CustomerService.Api:/app/src/CustomerService.Api
       - ./.certs:/certs:ro
       # Keep Linux build output in the container, not mixed with the host's bin/obj.
       - /app/src/CustomerService.Api/bin
       - /app/src/CustomerService.Api/obj
+    depends_on:
+      database:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/7289'"]
       interval: 5s
@@ -45,3 +64,6 @@ services:
     depends_on:
       frontend:
         condition: service_started
+
+volumes:
+  postgres-data:

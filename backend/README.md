@@ -1,6 +1,6 @@
 # Customer Service API
 
-ASP.NET Core API for the Customer Service Portal. The ticket endpoints are defined according to [docs/api/kontrakt.md](../docs/api/kontrakt.md), but their handlers are stubs that return `501 Not Implemented` until persistence is added.
+ASP.NET Core API for the Customer Service Portal. The ticket endpoints are defined according to [docs/api/kontrakt.md](../docs/api/kontrakt.md). Ticket listing uses PostgreSQL through Entity Framework Core; the other ticket handlers remain outside this implementation.
 
 ## Requirements
 
@@ -13,6 +13,16 @@ dotnet --info
 ```
 
 ## Run locally
+
+From the repository root, start the database, API, and frontend with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+The API applies EF Core migrations and inserts sample tickets when the database is empty. PostgreSQL data is kept in the `postgres-data` volume. Set `POSTGRES_PASSWORD` to override the local development password.
+
+To run the API directly, configure `ConnectionStrings__DefaultConnection` for a reachable PostgreSQL instance before starting it.
 
 From the `backend` directory, start the API:
 
@@ -36,6 +46,16 @@ dotnet build src/CustomerService.Api -p:GenerateOpenApi=true
 ```
 
 This writes `docs/api/openapi.json`. Regenerate and commit it whenever the API changes, and keep `docs/api/kontrakt.md` in sync.
+
+## Database migrations
+
+From the `backend` directory, create a migration after changing the ticket model:
+
+```bash
+dotnet ef migrations add <MigrationName> --project src/CustomerService.Api/CustomerService.Api.csproj
+```
+
+Migrations are applied automatically at API startup.
 
 ## HTTPS development certificate
 
