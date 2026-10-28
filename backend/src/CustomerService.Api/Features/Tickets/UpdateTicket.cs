@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations;
 namespace CustomerService.Api.Features.Tickets;
 
 public record UpdateTicketRequest(
-    [property: MaxLength(200)] string? Title,
-    [property: MaxLength(5000)] string? Description,
-    TicketCategory? Category,
-    TicketPriority? Priority,
-    string? CustomerName,
-    [property: EmailAddress] string? CustomerEmail);
+    [property: MaxLength(200)] string? Title = null,
+    [property: MaxLength(5000)] string? Description = null,
+    TicketCategory? Category = null,
+    TicketPriority? Priority = null,
+    string? CustomerName = null,
+    [property: EmailAddress] string? CustomerEmail = null);
 
 public static class UpdateTicket
 {
