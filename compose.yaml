@@ -33,3 +33,15 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  e2e:
+    profiles: ["test"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.e2e
+    environment:
+      DEV_HTTPS: "true"
+      PLAYWRIGHT_BASE_URL: https://frontend:5173
+    depends_on:
+      frontend:
+        condition: service_started
