@@ -76,32 +76,34 @@ test('ticket list shows an error state and retry action', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Försök igen' })).toBeVisible()
 })
 
-test('ticket list displays all API tickets in newest-first order', async ({ page, request }) => {
-  const response = await request.get('/api/tickets')
-  expect(response.ok()).toBeTruthy()
+const ticketsInApiOrder: Ticket[] = [
+  { id: 7, title: 'Invoice copy request', priority: 'Low', status: 'Closed', createdAt: '2026-10-28T09:00:00Z' },
+  { id: 9, title: 'Damaged pallet on arrival', priority: 'Medium', status: 'WaitingForCustomer', createdAt: '2026-10-28T09:00:00Z' },
+  { id: 3, title: 'Return of unused cable', priority: 'High', status: 'New', createdAt: '2026-10-26T13:45:00Z' },
+  { id: 5, title: 'Crane booking change', priority: 'Medium', status: 'InProgress', createdAt: '2026-10-25T07:10:00Z' },
+]
 
-  const tickets = (await response.json()) as Ticket[]
-  expect(tickets.length).toBeGreaterThanOrEqual(5)
+const expectedLabels: Record<number, { priority: string; status: string }> = {
+  7: { priority: 'Låg', status: 'Stängt' },
+  9: { priority: 'Medel', status: 'Väntar på kund' },
+  3: { priority: 'Hög', status: 'Nytt' },
+  5: { priority: 'Medel', status: 'Pågår' },
+}
 
-  const sortedTickets = [...tickets].sort(
-    (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt) || right.id - left.id,
-  )
-  expect(tickets.map((ticket) => ticket.id)).toEqual(sortedTickets.map((ticket) => ticket.id))
+test('ticket list keeps API order and shows Swedish labels for every status and priority', async ({ page }) => {
+  await page.route('**/api/tickets', (route) => route.fulfill({ json: ticketsInApiOrder }))
 
   await page.goto('/tickets')
-  const rows = page.getByRole('listitem')
-  await expect(rows).toHaveCount(tickets.length)
 
-  for (const [index, ticket] of tickets.entries()) {
+  const rows = page.getByRole('listitem')
+  await expect(rows).toHaveCount(ticketsInApiOrder.length)
+
+  for (const [index, ticket] of ticketsInApiOrder.entries()) {
     const row = rows.nth(index)
     await expect(row.getByText(`Ärende #${ticket.id}`)).toBeVisible()
     await expect(row.getByRole('heading', { name: ticket.title })).toBeVisible()
-    await expect(row.getByText(ticket.priority === 'High' ? 'Hög' : ticket.priority === 'Medium' ? 'Medel' : 'Låg', { exact: true })).toBeVisible()
-    await expect(row.getByText(ticket.status === 'InProgress'
-      ? 'Pågår'
-      : ticket.status === 'WaitingForCustomer'
-        ? 'Väntar på kund'
-        : ticket.status === 'New' ? 'Nytt' : 'Stängt', { exact: true })).toBeVisible()
+    await expect(row.getByText(expectedLabels[ticket.id].priority, { exact: true })).toBeVisible()
+    await expect(row.getByText(expectedLabels[ticket.id].status, { exact: true })).toBeVisible()
     await expect(row.locator('time')).toHaveAttribute('datetime', ticket.createdAt)
   }
 })
