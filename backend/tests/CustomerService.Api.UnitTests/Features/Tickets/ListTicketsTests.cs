@@ -47,6 +47,23 @@ public sealed class ListTicketsTests
     }
 
     [Fact]
+    public async Task GetTicketsReturnsHigherIdFirstWhenCreatedAtIsEqual()
+    {
+        var createdAt = new DateTimeOffset(2026, 10, 28, 9, 0, 0, TimeSpan.Zero);
+        await using var factory = await TicketApiFactory.CreateAsync(
+            CreateTicket(7, "Invoice copy request", createdAt),
+            CreateTicket(9, "Damaged pallet on arrival", createdAt),
+            CreateTicket(3, "Return of unused cable", createdAt));
+
+        using var response = await factory.Client.GetAsync("/api/tickets");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var tickets = await response.Content.ReadFromJsonAsync<TicketResponse[]>(JsonOptions);
+        Assert.NotNull(tickets);
+        Assert.Equal(new[] { 9, 7, 3 }, tickets.Select(ticket => ticket.Id));
+    }
+
+    [Fact]
     public async Task GetTicketsReturnsEmptyCollectionWhenDatabaseIsEmpty()
     {
         await using var factory = await TicketApiFactory.CreateAsync();
