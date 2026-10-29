@@ -26,7 +26,7 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/tickets`)
 
     if (!response.ok) {
-      throw new ApiError(`Unable to load tickets (HTTP ${response.status}).`, response.status)
+      throw new ApiError(`Kunde inte hämta ärenden (HTTP ${response.status}).`, response.status)
     }
 
     return response.json() as Promise<Ticket[]>
@@ -35,7 +35,7 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/tickets/${id}`)
 
     if (!response.ok) {
-      throw new ApiError(`Unable to load ticket (HTTP ${response.status}).`, response.status)
+      throw new ApiError(`Kunde inte hämta ärendet (HTTP ${response.status}).`, response.status)
     }
 
     return response.json() as Promise<Ticket>
@@ -52,7 +52,7 @@ export const api = {
     })
 
     if (!response.ok) {
-      throw new ApiError(`Unable to update ticket status (HTTP ${response.status}).`, response.status)
+      throw new ApiError(`Kunde inte uppdatera ärendestatus (HTTP ${response.status}).`, response.status)
     }
 
     return response.json() as Promise<Ticket>

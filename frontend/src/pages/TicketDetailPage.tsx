@@ -6,14 +6,27 @@ import type { Ticket, TicketStatus } from '../types/ticket'
 const statuses: TicketStatus[] = ['New', 'InProgress', 'WaitingForCustomer', 'Closed']
 
 const statusLabels: Record<TicketStatus, string> = {
-  New: 'New',
-  InProgress: 'In progress',
-  WaitingForCustomer: 'Waiting for customer',
-  Closed: 'Closed',
+  New: 'Nytt',
+  InProgress: 'Pågår',
+  WaitingForCustomer: 'Väntar på kund',
+  Closed: 'Stängt',
+}
+
+const priorityLabels: Record<Ticket['priority'], string> = {
+  Low: 'Låg',
+  Medium: 'Medel',
+  High: 'Hög',
+}
+
+const categoryLabels: Record<Ticket['category'], string> = {
+  OrdersDeliveries: 'Beställningar och leveranser',
+  Invoices: 'Fakturor',
+  ReturnsComplaints: 'Returer och reklamationer',
+  Other: 'Övrigt',
 }
 
 const formatDate = (value: string) =>
-  new Intl.DateTimeFormat('en-GB', {
+  new Intl.DateTimeFormat('sv-SE', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -27,7 +40,7 @@ export default function TicketDetailPage() {
   const ticketId = Number(id)
 
   if (!Number.isInteger(ticketId) || ticketId < 1) {
-    return <TicketMessage message="Invalid ticket number." />
+    return <TicketMessage message="Ogiltigt ärendenummer." />
   }
 
   return <TicketDetails ticketId={ticketId} />
@@ -53,10 +66,10 @@ function TicketDetails({ ticketId }: { ticketId: number }) {
       .catch((cause: unknown) => {
         if (!active) return
         const message = cause instanceof ApiError && cause.status === 404
-          ? 'Ticket not found.'
+          ? 'Ärendet kunde inte hittas.'
           : cause instanceof ApiError
             ? cause.message
-            : 'Unable to reach the ticket service.'
+            : 'Kunde inte nå ärendetjänsten.'
         setLoadResult({ ticketId, error: message })
       })
 
@@ -68,14 +81,14 @@ function TicketDetails({ ticketId }: { ticketId: number }) {
   const currentResult = loadResult?.ticketId === ticketId ? loadResult : null
 
   if (!currentResult) {
-    return <TicketMessage message="Loading ticket..." role="status" />
+    return <TicketMessage message="Hämtar ärende..." role="status" />
   }
 
   if ('error' in currentResult) {
     return (
       <section className="space-y-5">
         <Link to="/tickets" className="text-sm font-medium text-teal-700 hover:underline">
-          Back to tickets
+          Tillbaka till ärenden
         </Link>
         <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-5 py-6 text-red-800">
           <p>{currentResult.error}</p>
@@ -87,7 +100,7 @@ function TicketDetails({ ticketId }: { ticketId: number }) {
             }}
             className="mt-4 rounded border border-red-300 px-3 py-2 text-sm font-medium hover:bg-red-100"
           >
-            Try again
+            Försök igen
           </button>
         </div>
       </section>
@@ -107,9 +120,9 @@ function TicketDetails({ ticketId }: { ticketId: number }) {
       const updatedTicket = await api.updateTicketStatus(ticketId, selectedStatus)
       setLoadResult({ ticketId, ticket: updatedTicket })
       setStatusChoice({ ticketId, status: updatedTicket.status })
-      setSaveMessage('Status updated.')
+      setSaveMessage('Statusen har uppdaterats.')
     } catch (cause) {
-      setSaveError(cause instanceof ApiError ? cause.message : 'Unable to update ticket status.')
+      setSaveError(cause instanceof ApiError ? cause.message : 'Kunde inte uppdatera ärendestatus.')
     } finally {
       setSaving(false)
     }
@@ -118,36 +131,36 @@ function TicketDetails({ ticketId }: { ticketId: number }) {
   return (
     <section className="mx-auto max-w-4xl space-y-6">
       <Link to="/tickets" className="inline-flex text-sm font-medium text-teal-700 hover:underline">
-        Back to tickets
+        Tillbaka till ärenden
       </Link>
 
       <header className="border-b border-slate-200 pb-5">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
-          Ticket #{ticket.id}
+          Ärende #{ticket.id}
         </p>
         <h1 className="mt-2 break-words text-3xl font-semibold text-slate-950">{ticket.title}</h1>
-        <p className="mt-2 text-sm text-slate-600">Created {formatDate(ticket.createdAt)}</p>
+        <p className="mt-2 text-sm text-slate-600">Skapat {formatDate(ticket.createdAt)}</p>
       </header>
 
       <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_18rem]">
         <article className="rounded-md border border-[#263c53] bg-[#0F1C2E] p-5 text-white">
-          <h2 className="text-sm font-semibold text-[#AAB6C5]">Description</h2>
+          <h2 className="text-sm font-semibold text-[#AAB6C5]">Beskrivning</h2>
           <p className="mt-3 whitespace-pre-wrap text-sm leading-6">{ticket.description}</p>
         </article>
 
         <aside className="space-y-5 rounded-md border border-[#263c53] bg-[#16283D] p-5 text-white">
-          <h2 className="text-sm font-semibold">Ticket information</h2>
+          <h2 className="text-sm font-semibold">Ärendeinformation</h2>
           <dl className="space-y-4 text-sm">
             <div>
-              <dt className="text-xs text-[#AAB6C5]">Category</dt>
-              <dd className="mt-1">{ticket.category}</dd>
+              <dt className="text-xs text-[#AAB6C5]">Kategori</dt>
+              <dd className="mt-1">{categoryLabels[ticket.category]}</dd>
             </div>
             <div>
-              <dt className="text-xs text-[#AAB6C5]">Priority</dt>
-              <dd className="mt-1">{ticket.priority}</dd>
+              <dt className="text-xs text-[#AAB6C5]">Prioritet</dt>
+              <dd className="mt-1">{priorityLabels[ticket.priority]}</dd>
             </div>
             <div>
-              <dt className="text-xs text-[#AAB6C5]">Customer</dt>
+              <dt className="text-xs text-[#AAB6C5]">Kund</dt>
               <dd className="mt-1">{ticket.customerName}</dd>
               <dd>
                 <a className="break-all text-[#66D4C8] hover:underline" href={`mailto:${ticket.customerEmail}`}>
@@ -180,7 +193,7 @@ function TicketDetails({ ticketId }: { ticketId: number }) {
               disabled={saving || selectedStatus === ticket.status}
               className="w-full rounded bg-[#2FB1A5] px-4 py-2 text-sm font-semibold text-[#0F1C2E] hover:bg-[#66D4C8] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save status'}
+              {saving ? 'Sparar...' : 'Spara status'}
             </button>
             {saveError && <p role="alert" className="text-sm text-red-300">{saveError}</p>}
             {saveMessage && <p role="status" className="text-sm text-[#66D4C8]">{saveMessage}</p>}
@@ -195,7 +208,7 @@ function TicketMessage({ message, role = 'alert' }: { message: string; role?: 'a
   return (
     <section className="space-y-5">
       <Link to="/tickets" className="text-sm font-medium text-teal-700 hover:underline">
-        Back to tickets
+        Tillbaka till ärenden
       </Link>
       <p role={role} className="rounded-md border border-slate-200 bg-white px-5 py-6 text-slate-700">
         {message}

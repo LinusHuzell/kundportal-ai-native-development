@@ -23,7 +23,7 @@ test('ticket list opens details and persists a status change through the API', a
   })
 
   await page.goto('/tickets')
-  await page.getByRole('link', { name: /Ticket #42/ }).click()
+  await page.getByRole('link', { name: /Ärende #42/ }).click()
 
   await expect(page).toHaveURL(/\/tickets\/42$/)
   await expect(page.getByRole('heading', { name: ticket.title })).toBeVisible()
@@ -31,9 +31,9 @@ test('ticket list opens details and persists a status change through the API', a
   await expect(page.getByText(ticket.customerEmail)).toBeVisible()
 
   await page.getByLabel('Status').selectOption('InProgress')
-  await page.getByRole('button', { name: 'Save status' }).click()
+  await page.getByRole('button', { name: 'Spara status' }).click()
 
-  await expect(page.getByRole('status')).toHaveText('Status updated.')
+  await expect(page.getByRole('status')).toHaveText('Statusen har uppdaterats.')
   await expect(page.getByLabel('Status')).toHaveValue('InProgress')
   expect(currentTicket.status).toBe('InProgress')
 })

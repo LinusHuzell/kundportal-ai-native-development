@@ -12,7 +12,7 @@ export default function App() {
         <Route path="/tickets" element={<TicketListPage />} />
         <Route path="/tickets/new" element={<TicketCreatePage />} />
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
-        <Route path="*" element={<p className="p-6">Page not found.</p>} />
+        <Route path="*" element={<p className="p-6">Sidan kunde inte hittas.</p>} />
       </Route>
     </Routes>
   )

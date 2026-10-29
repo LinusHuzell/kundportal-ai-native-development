@@ -32,13 +32,13 @@ test('ticket list renders all returned tickets and required fields', async ({ pa
 
   const rows = page.getByRole('listitem')
   await expect(rows).toHaveCount(sampleTickets.length)
-  await expect(rows.nth(0).getByText('Ticket #42')).toBeVisible()
+  await expect(rows.nth(0).getByText('Ärende #42')).toBeVisible()
   await expect(rows.nth(0).getByRole('heading', { name: 'Site access lift inspection' })).toBeVisible()
-  await expect(rows.nth(0).getByText('High', { exact: true })).toBeVisible()
-  await expect(rows.nth(0).getByText('In progress')).toBeVisible()
+  await expect(rows.nth(0).getByText('Hög', { exact: true })).toBeVisible()
+  await expect(rows.nth(0).getByText('Pågår')).toBeVisible()
   await expect(rows.nth(0).locator('time')).toHaveAttribute('datetime', sampleTickets[0].createdAt)
-  await expect(rows.nth(1).getByText('Ticket #41')).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Ticket statistics' })).toContainText('2')
+  await expect(rows.nth(1).getByText('Ärende #41')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Ärendestatistik' })).toContainText('2')
 })
 
 test('ticket list shows loading while the request is pending', async ({ page }) => {
@@ -53,10 +53,10 @@ test('ticket list shows loading while the request is pending', async ({ page }) 
   })
 
   await page.goto('/tickets')
-  await expect(page.getByRole('status')).toHaveText('Loading tickets...')
+  await expect(page.getByRole('status')).toHaveText('Hämtar ärenden...')
 
   finishRequest()
-  await expect(page.getByText('No tickets to display.')).toBeVisible()
+  await expect(page.getByText('Inga ärenden att visa.')).toBeVisible()
 })
 
 test('ticket list shows an empty state', async ({ page }) => {
@@ -64,7 +64,7 @@ test('ticket list shows an empty state', async ({ page }) => {
 
   await page.goto('/tickets')
 
-  await expect(page.getByText('No tickets to display.')).toBeVisible()
+  await expect(page.getByText('Inga ärenden att visa.')).toBeVisible()
 })
 
 test('ticket list shows an error state and retry action', async ({ page }) => {
@@ -73,7 +73,7 @@ test('ticket list shows an error state and retry action', async ({ page }) => {
   await page.goto('/tickets')
 
   await expect(page.getByRole('alert')).toContainText('HTTP 503')
-  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Försök igen' })).toBeVisible()
 })
 
 test('ticket list displays all API tickets in newest-first order', async ({ page, request }) => {
@@ -94,14 +94,14 @@ test('ticket list displays all API tickets in newest-first order', async ({ page
 
   for (const [index, ticket] of tickets.entries()) {
     const row = rows.nth(index)
-    await expect(row.getByText(`Ticket #${ticket.id}`)).toBeVisible()
+    await expect(row.getByText(`Ärende #${ticket.id}`)).toBeVisible()
     await expect(row.getByRole('heading', { name: ticket.title })).toBeVisible()
-    await expect(row.getByText(ticket.priority, { exact: true })).toBeVisible()
+    await expect(row.getByText(ticket.priority === 'High' ? 'Hög' : ticket.priority === 'Medium' ? 'Medel' : 'Låg', { exact: true })).toBeVisible()
     await expect(row.getByText(ticket.status === 'InProgress'
-      ? 'In progress'
+      ? 'Pågår'
       : ticket.status === 'WaitingForCustomer'
-        ? 'Waiting for customer'
-        : ticket.status, { exact: true })).toBeVisible()
+        ? 'Väntar på kund'
+        : ticket.status === 'New' ? 'Nytt' : 'Stängt', { exact: true })).toBeVisible()
     await expect(row.locator('time')).toHaveAttribute('datetime', ticket.createdAt)
   }
 })
