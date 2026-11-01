@@ -1,0 +1,63 @@
+# Isolated stack for the full-stack Playwright suite. See docs/teststrategi.md.
+# Standalone on purpose: keep images, environment and healthchecks in sync with compose.yaml.
+name: customerservice-e2e
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: customerservice
+      POSTGRES_USER: customerservice
+      POSTGRES_PASSWORD: customerservice_dev
+    # In memory: every run starts from a new database.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    environment:
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=customerservice;Username=customerservice;Password=customerservice_dev
+    volumes:
+      - ./.certs:/certs:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/7289'"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  frontend:
+    build: ./frontend
+    environment:
+      DEV_HTTPS: "true"
+      DEV_CERT_DIR: /certs
+      # Vite proxies /api to this address (see vite.config.ts).
+      API_PROXY_TARGET: https://backend:7289
+    volumes:
+      - ./.certs:/certs:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('https').get('https://127.0.0.1:5173', { rejectUnauthorized: false }, res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  e2e:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.e2e
+    environment:
+      DEV_HTTPS: "true"
+      PLAYWRIGHT_BASE_URL: https://frontend:5173
+    depends_on:
+      frontend:
+        condition: service_healthy
