@@ -5,6 +5,7 @@ ASP.NET Core API for the Customer Service Portal. The ticket endpoints are defin
 ## Requirements
 
 - .NET 10 SDK
+- PostgreSQL (or Docker Compose from the repository root)
 
 Check your SDK installation with:
 
@@ -21,6 +22,18 @@ dotnet run --project src/CustomerService.Api/CustomerService.Api.csproj --launch
 ```
 
 The API listens on https://localhost:7289 only. There is no HTTP profile, and `UseHttpsRedirection` (plus HSTS outside Development) is enabled. We always run HTTPS, including locally, so that development matches production behavior (secure cookies, HSTS, mixed-content rules) and customer data such as names and email addresses is never sent in clear text. Run `dotnet dev-certs https --trust` first (see below).
+
+## Database
+
+The API uses PostgreSQL through Entity Framework Core and the Npgsql provider. The Development connection string is configured in `src/CustomerService.Api/appsettings.Development.json`; other environments must provide `ConnectionStrings__DefaultConnection` through configuration or an environment variable. The root `compose.yaml` starts PostgreSQL with a persistent Docker volume and configures the backend to connect to it.
+
+At startup, the API applies pending migrations and seeds five example tickets only when the ticket table is empty. The seed operation does not add more tickets on subsequent starts.
+
+Create a migration from the repository root with:
+
+```bash
+dotnet ef migrations add MigrationName --project backend/src/CustomerService.Api/CustomerService.Api.csproj --startup-project backend/src/CustomerService.Api/CustomerService.Api.csproj --output-dir Data/Migrations
+```
 
 Endpoints live under `/api/tickets`. In the Development environment:
 
