@@ -1,7 +1,9 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const devHttps = process.env.DEV_HTTPS === 'true'
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `${devHttps ? 'https' : 'http'}://localhost:5173`
+// A port of its own, so local runs do not collide with the dev stack on 5173.
+const localPort = 5174
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `${devHttps ? 'https' : 'http'}://localhost:${localPort}`
 
 export default defineConfig({
   fullyParallel: true,
@@ -18,7 +20,7 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: 'npm run dev',
+        command: `npm run dev -- --port ${localPort} --strictPort`,
         url: baseURL,
         ignoreHTTPSErrors: devHttps,
         reuseExistingServer: !process.env.CI,
