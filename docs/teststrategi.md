@@ -53,6 +53,5 @@ Täckningsverktyg är inte införda än. När de är det:
 
 ## Nuläge
 
-- Unit-projektet saknar tester tills det finns valideringsregler.
-- Den mockade sviten saknar tester tills frontend har feltillstånd, och körs med `--pass-with-no-tests` fram till dess.
 - Endpoints är stubbar, så persistenstestet går mot `DbContext`. Varje feature testar sin egen sparning via API:t.
+- Den mockade sviten innehåller ett exempeltest tills frontend har feltillstånd.

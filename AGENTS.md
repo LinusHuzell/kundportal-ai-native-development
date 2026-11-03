@@ -50,7 +50,6 @@ Start from the acceptance criterion and use the cheapest level that can catch th
 - Never mock in `frontend/e2e/` (`page.route`, `context.route`, `routeFromHAR`).
 - End-to-end tests create their own data through the API with unique values, and assert only on that data. Never rely on seed data or on data from other tests.
 - Type mocked responses with the client's types and shape them after `docs/api/openapi.json`. Mock errors as problem+json.
-- When the first test is added to `frontend/e2e-mocked/`, remove `--pass-with-no-tests` from the `test:e2e:mocked` script.
 
 ### Docker Compose
 
