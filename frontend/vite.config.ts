@@ -36,5 +36,12 @@ export default defineConfig({
     // Unit tests live next to the code. Playwright specs in e2e/ are run separately.
     include: ['src/**/*.test.{ts,tsx}'],
     environment: 'node',
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/main.tsx', 'src/vite-env.d.ts'],
+      reporter: ['text', 'json-summary', 'html'],
+      reportsDirectory: 'coverage/unit',
+    },
   },
 })
