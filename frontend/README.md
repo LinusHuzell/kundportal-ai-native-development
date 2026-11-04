@@ -15,16 +15,16 @@ Requires Node 22+.
 
 ## Scripts
 
-| Script               | What it does                   |
-| -------------------- | ------------------------------ |
-| `npm run dev`        | Start the dev server           |
-| `npm run build`      | Typecheck and build to `dist/` |
-| `npm run typecheck`  | TypeScript only                |
-| `npm run lint`       | oxlint                         |
-| `npm run format`     | Prettier                       |
-| `npm test`           | Unit tests (Vitest) in `src/`  |
-| `npm run test:watch` | Vitest in watch mode           |
-| `npm run test:e2e`   | Playwright tests in `e2e/`     |
+| Script               | What it does                                 |
+| -------------------- | -------------------------------------------- |
+| `npm run dev`        | Start the dev server                         |
+| `npm run build`      | Typecheck and build to `dist/`               |
+| `npm run typecheck`  | TypeScript only                              |
+| `npm run lint`       | oxlint                                       |
+| `npm run format`     | Prettier                                     |
+| `npm test`           | Unit tests (Vitest) in `src/`, with coverage |
+| `npm run test:watch` | Vitest in watch mode                         |
+| `npm run test:e2e`   | Playwright tests in `e2e/`                   |
 
 ### Run e2e tests locally
 
@@ -84,3 +84,4 @@ Routes: `/tickets` (list), `/tickets/new` (create), `/tickets/:id` (detail).
 
 - **Unit tests (Vitest):** fast checks of pure logic such as form validation and label mapping. Named `*.test.ts(x)` next to the code.
 - **E2E tests (Playwright):** the main user flows and a few error paths in a real browser.
+- **Coverage:** `npm test` writes a coverage report to `coverage/unit/` (open `index.html`). Coverage is reported, never enforced: there are no thresholds. CI records the totals on each push to `main` in [docs/coverage/frontend-unit.md](../docs/coverage/frontend-unit.md).
