@@ -8,7 +8,7 @@ Så här testas projektet. Regler och kommandon för AI-agenter finns i [AGENTS.
 - Tester utgår från krav och acceptanskriterier i specen. Undantag är tester av intern logik och regressionstester för buggar.
 - Varje krav och acceptanskriterium i specen har minst ett test. Undantag är visuella krav som inte går att testa automatiskt, och de kontrolleras manuellt.
 - Ett fel testas på den billigaste nivån som kan fånga det.
-- Ett nytt test ses falla innan koden skrivs.
+- Testerna skrivs före koden (TDD) och ses falla på ett påstående innan koden skrivs. Finns koden redan kopplas beteendet tillfälligt bort, så att testet ses falla.
 - Kritiska tester (persistens, statusändringar, valideringsregler) sabotagekontrolleras: beteendet kopplas tillfälligt bort, och testet ska då falla av rätt anledning.
 - Mockar används bara för tillstånd som den riktiga stacken inte kan ge på begäran.
 
