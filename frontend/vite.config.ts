@@ -42,6 +42,7 @@ export default defineConfig({
       exclude: ['src/**/*.test.{ts,tsx}', 'src/main.tsx', 'src/vite-env.d.ts'],
       reporter: ['text', 'json-summary', 'html'],
       reportsDirectory: 'coverage/unit',
+      reportOnFailure: true,
     },
   },
 })
