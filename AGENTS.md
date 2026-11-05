@@ -58,7 +58,10 @@ After changing the API, regenerate `docs/api/openapi.json` from `backend/` with 
 
 ### Test coverage
 
-Coverage tooling is not set up yet. When it is: report coverage but never enforce it (no thresholds, no tests written to raise a number), and give each test level its own report, never merged or compared. Coverage shows what ran, not that it is correct.
+Report coverage but never enforce it (no thresholds, no tests written to raise a number). Give each test level its own report, never merged or compared. Coverage shows what ran, not that it is correct.
+
+- Only the frontend unit tests are measured: `npm test` writes the report to `frontend/coverage/unit/`. Playwright and backend coverage are not set up yet.
+- On push to `main`, CI appends a row per suite to `docs/coverage/<suite>.md`, one file per suite. Never edit those rows by hand.
 
 ### Running tests
 

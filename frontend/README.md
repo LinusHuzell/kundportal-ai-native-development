@@ -15,17 +15,17 @@ Requires Node 22+.
 
 ## Scripts
 
-| Script               | What it does                   |
-| -------------------- | ------------------------------ |
-| `npm run dev`        | Start the dev server           |
-| `npm run build`      | Typecheck and build to `dist/` |
-| `npm run typecheck`  | TypeScript only                |
-| `npm run lint`       | oxlint                         |
-| `npm run format`     | Prettier                       |
-| `npm test`           | Unit tests (Vitest) in `src/`  |
-| `npm run test:watch` | Vitest in watch mode           |
-| `npm run test:e2e`   | Playwright tests in `e2e/`; run through Compose, see below |
-| `npm run test:e2e:mocked` | Playwright tests in `e2e-mocked/` |
+| Script                    | What it does                                               |
+| ------------------------- | ---------------------------------------------------------- |
+| `npm run dev`             | Start the dev server                                       |
+| `npm run build`           | Typecheck and build to `dist/`                             |
+| `npm run typecheck`       | TypeScript only                                            |
+| `npm run lint`            | oxlint                                                     |
+| `npm run format`          | Prettier                                                   |
+| `npm test`                | Unit tests (Vitest) in `src/`, with coverage               |
+| `npm run test:watch`      | Vitest in watch mode                                       |
+| `npm run test:e2e`        | Playwright tests in `e2e/`; run through Compose, see below |
+| `npm run test:e2e:mocked` | Playwright tests in `e2e-mocked/`                          |
 
 ### Run mocked e2e tests locally
 
@@ -86,5 +86,6 @@ Routes: `/tickets` (list), `/tickets/new` (create), `/tickets/:id` (detail).
 
 - **Unit tests (Vitest):** fast checks of pure logic such as form validation and label mapping. Named `*.test.ts(x)` next to the code.
 - **E2E tests (Playwright):** the user flows from the acceptance criteria run against the full stack in `e2e/`. Tests in `e2e-mocked/` mock the API with `page.route` to show states the real stack cannot produce, such as server errors.
+- **Coverage:** `npm test` writes a coverage report to `coverage/unit/` (open `index.html`). Coverage is reported, never enforced: there are no thresholds. CI records the totals on each push to `main` in [docs/coverage/frontend-unit.md](../docs/coverage/frontend-unit.md).
 
 See [AGENTS.md](../AGENTS.md) and [docs/teststrategi.md](../docs/teststrategi.md) for the full test strategy.

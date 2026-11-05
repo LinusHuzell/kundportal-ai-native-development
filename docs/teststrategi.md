@@ -45,11 +45,11 @@ Så här testas projektet. Regler och kommandon för AI-agenter finns i [AGENTS.
 
 ## Täckning
 
-Täckningsverktyg är inte införda än. När de är det:
-
 - Täckning rapporteras men stoppar aldrig en PR.
 - Varje testnivå får en egen rapport.
 - Täckning visar vilken kod som kördes, inte att beteendet är rätt.
+- Bara frontendens enhetstester mäts än så länge. `npm test` skriver rapporten till `frontend/coverage/unit/`.
+- Vid push till `main` lägger CI till en rad per testsvit i `docs/coverage/`, en fil per svit.
 
 ## Nuläge
 

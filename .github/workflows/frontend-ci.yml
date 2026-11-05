@@ -11,6 +11,8 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: frontend
@@ -24,7 +26,18 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      - id: unit
+        run: npm test
+      - name: Report unit coverage
+        if: ${{ !cancelled() && steps.unit.outcome != 'skipped' }}
+        run: >
+          node ../.github/scripts/coverage-row.mjs "frontend unit" coverage/unit/coverage-summary.json
+          ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '../docs/coverage/frontend-unit.md' || '' }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && steps.unit.outcome != 'skipped' }}
+        with:
+          name: coverage-unit
+          path: frontend/coverage/unit
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e:mocked
@@ -33,3 +46,15 @@ jobs:
         with:
           name: playwright-report
           path: frontend/playwright-report
+      - name: Commit coverage row
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ../docs/coverage/frontend-unit.md
+          git commit -m "Update frontend unit coverage for ${GITHUB_SHA::7}"
+          for attempt in 1 2 3; do
+            git pull --rebase && git push && exit 0
+            sleep 5
+          done
+          exit 1

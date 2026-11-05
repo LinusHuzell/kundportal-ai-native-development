@@ -12,7 +12,7 @@
     "typecheck": "tsc -b",
     "test:e2e": "playwright test --project=fullstack",
     "test:e2e:mocked": "playwright test --project=mocked",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -28,6 +28,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "^5.0.5",
     "oxlint": "^1.88.0",
     "prettier": "^3.9.10",
     "typescript": "~6.0.3",
