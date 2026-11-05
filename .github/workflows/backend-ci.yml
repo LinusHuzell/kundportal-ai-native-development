@@ -1,0 +1,31 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**', '.github/workflows/backend-ci.yml']
+  pull_request:
+    paths: ['backend/**', '.github/workflows/backend-ci.yml']
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore CustomerService.slnx
+      - run: dotnet build CustomerService.slnx --no-restore
+      - run: dotnet test CustomerService.slnx --no-build
+      - run: dotnet build src/CustomerService.Api --no-restore -p:GenerateOpenApi=true
+      - name: Check that docs/api/openapi.json is up to date
+        run: |
+          git diff --exit-code -- ../docs/api/openapi.json || {
+            echo "::error::docs/api/openapi.json is out of date. Regenerate it with: dotnet build src/CustomerService.Api -p:GenerateOpenApi=true"
+            exit 1
+          }

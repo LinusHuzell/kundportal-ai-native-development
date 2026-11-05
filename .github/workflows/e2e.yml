@@ -1,0 +1,28 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - 'frontend/**'
+      - 'backend/**'
+      - 'compose.test.yaml'
+      - 'scripts/setup-dev-cert.sh'
+      - '.github/workflows/e2e.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: ./scripts/setup-dev-cert.sh
+      - run: docker compose -f compose.test.yaml run --build --rm e2e
+      - name: Show stack logs
+        if: failure()
+        run: docker compose -f compose.test.yaml logs --no-color

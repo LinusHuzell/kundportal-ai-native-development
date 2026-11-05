@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "format": "prettier --write .",
     "typecheck": "tsc -b",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=fullstack",
+    "test:e2e:mocked": "playwright test --project=mocked",
     "test": "vitest run",
     "test:watch": "vitest"
   },

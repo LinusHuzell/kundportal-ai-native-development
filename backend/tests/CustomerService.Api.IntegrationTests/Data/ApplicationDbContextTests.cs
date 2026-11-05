@@ -2,31 +2,33 @@ using CustomerService.Api.Data;
 using CustomerService.Api.Features.Tickets;
 using Microsoft.EntityFrameworkCore;
 
-namespace CustomerService.Api.UnitTests.Data;
+namespace CustomerService.Api.IntegrationTests.Data;
 
-public sealed class ApplicationDbContextTests
+public sealed class ApplicationDbContextTests(ApiFixture fixture) : IntegrationTest(fixture)
 {
     [Fact]
     public async Task CanCreateDbContextAndQueryTickets()
     {
-        await using var dbContext = CreateDbContext();
+        await using var dbContext = Fixture.CreateDbContext();
 
         Assert.Empty(await dbContext.Tickets.ToListAsync());
     }
 
     [Fact]
-    public async Task SeedDataAddsFiveTicketsOnlyWhenDatabaseIsEmpty()
+    public async Task SeedDataAddsFiveTicketsWhenDatabaseIsEmpty()
     {
-        await using var dbContext = CreateDbContext();
+        await using var dbContext = Fixture.CreateDbContext();
 
-        await SeedData.InitializeAsync(dbContext);
         await SeedData.InitializeAsync(dbContext);
 
         Assert.Equal(5, await dbContext.Tickets.CountAsync());
+    }
 
-        var populatedDatabase = Guid.NewGuid().ToString();
-        await using var populatedContext = CreateDbContext(populatedDatabase);
-        populatedContext.Tickets.Add(new Ticket
+    [Fact]
+    public async Task SeedDataAddsNothingWhenDatabaseHasTickets()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        dbContext.Tickets.Add(new Ticket
         {
             TicketNumber = "SR-TEST-1",
             Title = "Befintligt ärende",
@@ -36,18 +38,17 @@ public sealed class ApplicationDbContextTests
             Status = TicketStatus.New,
             CreatedAt = DateTimeOffset.UtcNow,
         });
-        await populatedContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
-        await SeedData.InitializeAsync(populatedContext);
+        await SeedData.InitializeAsync(dbContext);
 
-        Assert.Single(await populatedContext.Tickets.ToListAsync());
+        Assert.Single(await dbContext.Tickets.ToListAsync());
     }
 
     [Fact]
     public async Task TicketPersistsAcrossDbContextInstances()
     {
-        var databaseName = Guid.NewGuid().ToString();
-        await using (var writeContext = CreateDbContext(databaseName))
+        await using (var writeContext = Fixture.CreateDbContext())
         {
             writeContext.Tickets.Add(new Ticket
             {
@@ -62,19 +63,10 @@ public sealed class ApplicationDbContextTests
             await writeContext.SaveChangesAsync();
         }
 
-        await using var readContext = CreateDbContext(databaseName);
+        await using var readContext = Fixture.CreateDbContext();
         var ticket = await readContext.Tickets.SingleAsync();
 
         Assert.Equal("SR-TEST-2", ticket.TicketNumber);
         Assert.Equal("Kontrollera värmepump", ticket.Title);
-    }
-
-    private static ApplicationDbContext CreateDbContext(string? databaseName = null)
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName ?? Guid.NewGuid().ToString())
-            .Options;
-
-        return new ApplicationDbContext(options);
     }
 }
