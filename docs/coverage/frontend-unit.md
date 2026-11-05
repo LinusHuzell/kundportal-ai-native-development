@@ -6,3 +6,4 @@ Coverage shows which code ran during the tests, not that it behaves correctly. T
 
 | Date | Commit | Statements | Branches | Functions | Lines | CI run |
 |---|---|---|---|---|---|---|
+| 2026-11-05 | [`0726fbf`](https://github.com/LinusHuzell/kundportal-ai-native-development/commit/0726fbf8394f2d80689f797d0a0cb44ba4ea0f73) | 13.04 % | 0 % | 0 % | 13.04 % | [42075878262](https://github.com/LinusHuzell/kundportal-ai-native-development/actions/runs/42075878262) |
