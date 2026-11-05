@@ -75,11 +75,11 @@ Run the solution's tests from the `backend` directory:
 dotnet test CustomerService.slnx
 ```
 
-The solution contains unit-test and end-to-end test projects. Their current test files are placeholders, so this command does not yet verify API behavior.
+The solution contains a unit-test project and an integration-test project. Integration tests run the API against Postgres in a container, so Docker must be running. See [AGENTS.md](../AGENTS.md) and [docs/teststrategi.md](../docs/teststrategi.md) for the test strategy.
 
 ## Project layout
 
 - `src/CustomerService.Api/` - ASP.NET Core API
   - `Features/<Feature>/` - vertical slices; each use case has one file with its request type, route mapping and handler (e.g. `Features/Tickets/CreateTicket.cs`). Shared feature types live in `TicketModels.cs`, and `TicketsEndpoints.cs` registers the slices.
 - `tests/CustomerService.Api.UnitTests/` - unit tests
-- `e2e/CustomerService.Api.E2E/` - end-to-end tests
+- `tests/CustomerService.Api.IntegrationTests/` - API integration tests

@@ -1,0 +1,74 @@
+# Instructions for AI agents
+
+## Testing
+
+Read [docs/teststrategi.md](docs/teststrategi.md) (Swedish) before writing or changing tests. The rules below add to it.
+
+When you change a testing rule, update both this file and docs/teststrategi.md.
+
+### Test levels
+
+Use the cheapest level that can catch the failure.
+
+| Level | Tool | Location | Use for |
+|---|---|---|---|
+| Backend unit | xUnit | `backend/tests/CustomerService.Api.UnitTests/` | Validation and business rules with their edge cases. No database or HTTP |
+| Backend integration | xUnit, `WebApplicationFactory`, Testcontainers (Postgres) | `backend/tests/CustomerService.Api.IntegrationTests/` | Each endpoint's HTTP contract (status codes, problem+json), one test that it applies each rule, persistence |
+| Frontend unit | Vitest | `frontend/src/`, next to the code as `*.test.ts(x)` | How the client maps responses and errors; client-side logic |
+| End-to-end | Playwright, full stack in `compose.test.yaml` | `frontend/e2e/*.spec.ts` | One test per user flow in the acceptance criteria, not per edge case |
+| End-to-end, mocked API | Playwright with `page.route` | `frontend/e2e-mocked/*.spec.ts` | Only states the real stack cannot produce on demand: server errors, network failures, slow responses, an empty list |
+
+Never mock what the real stack can produce, such as a validation error or a missing ticket.
+
+### What to test
+
+- Every requirement and acceptance criterion in the spec has at least one test. Visual requirements that cannot be automated are checked manually.
+- Every feature gets a happy path, the relevant error paths, and the boundary cases its rules imply.
+- Test only behaviour in the spec. If a behaviour worth testing is missing, propose adding it to the spec. Exceptions: internal logic, and regression tests that name the bug they protect against.
+
+### Test quality
+
+- Red first (TDD): write the test before the code and see it fail on an assertion, not a compile error. If the code already exists, temporarily break the behaviour to see the test fail, then restore it.
+- Sabotage-check critical tests (persistence, status changes, validation rules): temporarily disable the behaviour, confirm the test fails for the right reason, restore it.
+- Never weaken, skip or delete a test to make a run pass. Fix the cause or ask.
+- Keep each test small, self-explanatory and about one thing. Name it after the behaviour.
+
+### Backend
+
+- Integration tests use real Postgres via Testcontainers, never the EF InMemory provider or SQLite.
+- Integration test classes inherit from `IntegrationTest`. All tests share one container and one app (`Fixture.Factory`), run sequentially, and start with an empty database. When a migration adds a table, add it to `ApiFixture.ResetDatabaseAsync`.
+- Verify persistence by reading back separately, through the API or a new `DbContext` (`Fixture.CreateDbContext()`), never from the `DbContext` that wrote the data.
+- Endpoints are still stubs, so the existing persistence test uses `DbContext`. Each feature tests its own persistence through its API.
+
+### Frontend
+
+- In Playwright, find elements by role and accessible name, not CSS classes.
+- Never mock in `frontend/e2e/` (`page.route`, `context.route`, `routeFromHAR`).
+- End-to-end tests create their own data through the API with unique values and assert only on it. Never rely on seed data or other tests' data.
+- Type mocked responses with the client's types, shape them after `docs/api/openapi.json`, and mock errors as problem+json.
+- `frontend/e2e-mocked/ticket-list.spec.ts` is a placeholder. Delete it when adding the first real error-state test.
+
+### Docker Compose
+
+`compose.test.yaml` is a standalone copy of `compose.yaml`. Mirror changes to images, environment variables and healthchecks there, but keep it without host ports and with Postgres on tmpfs, so it runs beside the dev stack with a new database each start.
+
+### API contract
+
+After changing the API, regenerate `docs/api/openapi.json` from `backend/` with `dotnet build src/CustomerService.Api -p:GenerateOpenApi=true` and update `docs/api/kontrakt.md`. Never edit `openapi.json` by hand. Backend CI fails if it is stale.
+
+### Test coverage
+
+Coverage tooling is not set up yet. When it is: report coverage but never enforce it (no thresholds, no tests written to raise a number), and give each test level its own report, never merged or compared. Coverage shows what ran, not that it is correct.
+
+### Running tests
+
+| What | Where | Command |
+|---|---|---|
+| Backend unit and integration (needs Docker) | `backend/` | `dotnet test CustomerService.slnx` |
+| Frontend lint, typecheck, unit, build | `frontend/` | `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` |
+| End-to-end, mocked API (once: `npx playwright install chromium`) | `frontend/` | `npm run test:e2e:mocked` |
+| End-to-end (needs Docker; once: `./scripts/setup-dev-cert.sh`) | repo root | `docker compose -f compose.test.yaml run --build --rm e2e`, then `docker compose -f compose.test.yaml down` |
+
+Run Playwright only through the commands above. Plain `npx playwright test` also runs the full-stack suite without a backend.
+
+CI: Backend CI runs row 1 and the `openapi.json` check, Frontend CI rows 2 and 3, E2E row 4 on changes to frontend, backend or the test stack. Run the tests your change affects and report the actual output. Never claim something works without running it.
