@@ -1,31 +1,27 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `rounded px-3 py-1.5 text-sm font-medium ${
-    isActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-200'
-  }`
+  `topbar-link${isActive ? ' topbar-link--active' : ''}`
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-          <Link to="/tickets" className="text-lg font-semibold">
-            Customer Service Portal
+    <div className="portal-shell">
+      <header className="topbar">
+        <div className="topbar-inner">
+          <Link to="/tickets" className="brand" aria-label="Customer Service Portal home">
+            <span className="brand-name">Customer Service <span>Portal</span></span>
           </Link>
-          <nav className="flex gap-2">
+          <nav className="topbar-nav" aria-label="Main navigation">
             <NavLink to="/tickets" end className={navClass}>
               Tickets
             </NavLink>
-            <NavLink to="/tickets/new" className={navClass}>
+            <NavLink to="/tickets/new" className="create-button">
               New ticket
             </NavLink>
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <Outlet />
-      </main>
+      <main className="page-shell"><Outlet /></main>
     </div>
   )
 }

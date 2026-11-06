@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
-import type { Ticket } from '../types/ticket'
+import type { Ticket, TicketStatus } from '../types/ticket'
 
 type TicketListState =
   | { status: 'loading' }
@@ -8,6 +8,12 @@ type TicketListState =
   | { status: 'loaded'; tickets: Ticket[] }
 
 const createdDateFormatter = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' })
+const statusClassNames: Record<TicketStatus, string> = {
+  New: 'status-badge--new',
+  InProgress: 'status-badge--progress',
+  WaitingForCustomer: 'status-badge--waiting',
+  Closed: 'status-badge--closed',
+}
 
 export default function TicketListPage() {
   const [state, setState] = useState<TicketListState>({ status: 'loading' })
@@ -30,47 +36,41 @@ export default function TicketListPage() {
   }, [])
 
   return (
-    <section>
-      <h1 className="text-2xl font-semibold">Tickets</h1>
+    <section className="ticket-list-panel" aria-labelledby="ticket-list-title">
+      <h1 className="ticket-list-heading" id="ticket-list-title">Tickets</h1>
+
       {state.status === 'loading' && (
-        <p className="mt-4 text-slate-600" role="status">
-          Loading tickets...
-        </p>
+        <p className="state-message" role="status">Loading tickets...</p>
       )}
       {state.status === 'error' && (
-        <p className="mt-4 text-red-700" role="alert">
+        <p className="state-message state-message--error" role="alert">
           Tickets could not be loaded. Please try again.
         </p>
       )}
       {state.status === 'loaded' && state.tickets.length === 0 && (
-        <p className="mt-4 text-slate-600">No tickets found.</p>
+        <p className="state-message">No tickets found.</p>
       )}
       {state.status === 'loaded' && state.tickets.length > 0 && (
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-            <thead className="bg-slate-100 text-slate-700">
-              <tr>
-                <th className="px-4 py-3 font-semibold" scope="col">Ticket Number</th>
-                <th className="px-4 py-3 font-semibold" scope="col">Title</th>
-                <th className="px-4 py-3 font-semibold" scope="col">Priority</th>
-                <th className="px-4 py-3 font-semibold" scope="col">Status</th>
-                <th className="px-4 py-3 font-semibold" scope="col">Created Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
-              {state.tickets.map((ticket) => (
-                <tr key={ticket.id}>
-                  <td className="whitespace-nowrap px-4 py-3 font-medium">{ticket.ticketNumber}</td>
-                  <td className="px-4 py-3">{ticket.title}</td>
-                  <td className="whitespace-nowrap px-4 py-3">{ticket.priority}</td>
-                  <td className="whitespace-nowrap px-4 py-3">{ticket.status}</td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    {createdDateFormatter.format(new Date(ticket.createdAt))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="ticket-list" aria-label="Tickets">
+          {state.tickets.map((ticket) => (
+            <article className="ticket-card" key={ticket.id} aria-label={`${ticket.ticketNumber}: ${ticket.title}`}>
+              <div className="ticket-card-topline">
+                <span className="ticket-number">{ticket.ticketNumber}</span>
+                <span className={`priority-badge priority-badge--${ticket.priority.toLowerCase()}`}>
+                  {ticket.priority}
+                </span>
+              </div>
+              <h2 className="ticket-title">{ticket.title}</h2>
+              <div className="ticket-card-footer">
+                <span className={`status-badge ${statusClassNames[ticket.status]}`}>
+                  <span aria-hidden="true" />{ticket.status}
+                </span>
+                <time className="ticket-date" dateTime={ticket.createdAt}>
+                  {createdDateFormatter.format(new Date(ticket.createdAt))}
+                </time>
+              </div>
+            </article>
+          ))}
         </div>
       )}
     </section>

@@ -32,15 +32,15 @@ test('ticket list displays each ticket with its required information', async ({ 
   await page.route('**/api/tickets', (route) => route.fulfill({ json: tickets }))
   await page.goto('/tickets')
 
-  await expect(page.getByRole('heading', { name: 'Tickets' })).toBeVisible()
-  const rows = page.getByRole('row')
-  await expect(rows).toHaveCount(3)
-  await expect(rows.nth(1)).toContainText('SR-NEWER')
-  await expect(rows.nth(1)).toContainText('Newer ticket')
-  await expect(rows.nth(1)).toContainText('High')
-  await expect(rows.nth(1)).toContainText('InProgress')
-  await expect(rows.nth(1)).toContainText('1 Nov 2026')
-  await expect(rows.nth(2)).toContainText('SR-OLDER')
+  await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible()
+  const cards = page.getByRole('article', { name: /SR-/ })
+  await expect(cards).toHaveCount(2)
+  await expect(cards.nth(0)).toContainText('SR-NEWER')
+  await expect(cards.nth(0)).toContainText('Newer ticket')
+  await expect(cards.nth(0)).toContainText('High')
+  await expect(cards.nth(0)).toContainText('InProgress')
+  await expect(cards.nth(0)).toContainText('1 Nov 2026')
+  await expect(cards.nth(1)).toContainText('SR-OLDER')
 })
 
 test('ticket list shows a loading state while the request is pending', async ({ page }) => {
@@ -52,7 +52,7 @@ test('ticket list shows a loading state while the request is pending', async ({ 
   await page.goto('/tickets')
 
   await expect(page.getByRole('status')).toHaveText('Loading tickets...')
-  await expect(page.getByRole('row')).toHaveCount(3)
+  await expect(page.getByRole('article', { name: /SR-/ })).toHaveCount(2)
 })
 
 test('ticket list shows an empty state when there are no tickets', async ({ page }) => {

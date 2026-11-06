@@ -1,6 +1,124 @@
 @import 'tailwindcss';
 
-/*
- * Design tokens go here once the Figma design is final (@theme { ... }).
- * Until then we use Tailwind's neutral defaults.
- */
+:root {
+	font-family: Inter, 'Segoe UI', sans-serif;
+	color: #ffffff;
+	background: #0f1c2e;
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+
+	--navy: #0f1c2e;
+	--navy-raised: #16283d;
+	--navy-soft: #1b3048;
+	--teal: #2fb1a5;
+	--text-muted: #aab6c5;
+	--text-dim: #7e8b9a;
+	--line: rgb(170 182 197 / 15%);
+}
+
+* { box-sizing: border-box; }
+
+body {
+	min-width: 320px;
+	min-height: 100vh;
+	margin: 0;
+	background: linear-gradient(145deg, #0f1c2e 0%, #101f32 60%, #12253a 100%);
+}
+
+button, a { font: inherit; }
+a { color: inherit; text-decoration: none; }
+
+.portal-shell { min-height: 100vh; }
+
+.topbar {
+	height: 60px;
+	border-bottom: 1px solid var(--line);
+	background: rgb(15 28 46 / 94%);
+}
+
+.topbar-inner {
+	display: flex;
+	width: min(1200px, calc(100% - 48px));
+	height: 100%;
+	align-items: center;
+	justify-content: space-between;
+	margin: 0 auto;
+}
+
+.brand, .topbar-nav, .topbar-link, .create-button { display: flex; align-items: center; }
+.brand-name { overflow: hidden; color: #fff; font-size: 14px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.brand-name span { color: var(--text-muted); font-weight: 450; }
+.topbar-nav { height: 100%; gap: 10px; }
+.topbar-link { position: relative; height: 100%; padding: 0 12px; color: var(--text-muted); font-size: 13px; }
+.topbar-link:hover, .topbar-link--active { color: #fff; }
+.topbar-link--active::after { position: absolute; right: 12px; bottom: -1px; left: 12px; height: 2px; background: var(--teal); content: ''; }
+.create-button {
+	min-height: 34px;
+	padding: 0 13px;
+	border: 1px solid rgb(47 177 165 / 55%);
+	border-radius: 5px;
+	background: var(--teal);
+	color: #08201f;
+	font-size: 12px;
+	font-weight: 700;
+	transition: background-color 140ms ease, transform 140ms ease;
+}
+.create-button:hover { transform: translateY(-1px); background: #48c5b9; }
+
+.page-shell { width: min(1200px, calc(100% - 48px)); margin: 0 auto; padding: 34px 0 56px; }
+.ticket-list-panel { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 7px; background: rgb(15 28 46 / 78%); }
+.ticket-list-heading { margin: 0; padding: 18px 20px; border-bottom: 1px solid var(--line); color: #fff; font-size: 20px; font-weight: 700; }
+.ticket-list { max-height: 72vh; overflow-y: auto; padding: 8px; scrollbar-color: #40546a transparent; scrollbar-width: thin; }
+.ticket-card {
+	position: relative;
+	margin: 5px;
+	padding: 14px 14px 12px;
+	border: 1px solid rgb(170 182 197 / 12%);
+	border-radius: 6px;
+	background: linear-gradient(120deg, #16283d, #14253a);
+	animation: card-enter 300ms ease-out both;
+}
+.ticket-card:nth-child(2) { animation-delay: 35ms; }
+.ticket-card:nth-child(3) { animation-delay: 70ms; }
+.ticket-card:nth-child(4) { animation-delay: 105ms; }
+.ticket-card:nth-child(5) { animation-delay: 140ms; }
+.ticket-card-topline, .ticket-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ticket-number { color: var(--teal); font-size: 10px; font-weight: 700; }
+.ticket-title { margin: 10px 0 0; color: #fff; font-size: 13px; font-weight: 620; line-height: 1.45; }
+.ticket-card-footer { margin-top: 14px; }
+.priority-badge, .status-badge { display: inline-flex; min-height: 22px; align-items: center; gap: 6px; padding: 0 8px; border-radius: 4px; font-size: 10px; font-weight: 650; white-space: nowrap; }
+.priority-badge--low { background: rgb(100 116 139 / 15%); color: #aab6c5; }
+.priority-badge--medium { background: rgb(245 158 11 / 15%); color: #fbbf24; }
+.priority-badge--high { background: rgb(220 38 38 / 16%); color: #f87171; }
+.status-badge { background: rgb(100 116 139 / 15%); color: #c1cad5; }
+.status-badge > span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.status-badge--new { background: rgb(37 99 235 / 17%); color: #60a5fa; }
+.status-badge--progress { background: rgb(245 158 11 / 16%); color: #fbbf24; }
+.status-badge--waiting { background: rgb(100 116 139 / 18%); color: #aab6c5; }
+.status-badge--closed { background: rgb(22 163 74 / 16%); color: #4ade80; }
+.ticket-date { color: var(--text-dim); font-size: 10px; white-space: nowrap; }
+.state-message { margin: 0; padding: 28px 20px; color: var(--text-muted); font-size: 13px; }
+.state-message--error { color: #fca5a5; }
+
+@keyframes card-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 760px) {
+	.topbar-inner, .page-shell { width: min(100% - 32px, 600px); }
+	.page-shell { padding-top: 25px; }
+	.ticket-list { max-height: 52vh; }
+}
+
+@media (max-width: 480px) {
+	.brand-name { max-width: 150px; font-size: 12px; }
+	.topbar-inner, .page-shell { width: calc(100% - 24px); }
+	.topbar-nav { gap: 5px; }
+	.topbar-link { padding: 0 7px; font-size: 11px; }
+	.topbar-link--active::after { right: 7px; left: 7px; }
+	.create-button { min-height: 32px; padding: 0 9px; font-size: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
