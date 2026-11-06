@@ -17,6 +17,7 @@ export type TicketCategory = (typeof TICKET_CATEGORIES)[number]
 
 export interface Ticket {
   id: number
+  ticketNumber: string
   title: string
   description: string
   category: TicketCategory
