@@ -26,7 +26,13 @@ const notImplemented = (name: string): never => {
 }
 
 export const api = {
-  listTickets: async (): Promise<Ticket[]> => notImplemented('listTickets'),
+  listTickets: async (): Promise<Ticket[]> => {
+    const response = await fetch(`${API_BASE_URL}/tickets`)
+    if (!response.ok) {
+      throw new ApiError(`Failed to load tickets (${response.status})`, response.status)
+    }
+    return (await response.json()) as Ticket[]
+  },
   getTicket: async (_id: number): Promise<Ticket> => notImplemented('getTicket'),
   createTicket: async (_input: CreateTicketInput): Promise<Ticket> =>
     notImplemented('createTicket'),
