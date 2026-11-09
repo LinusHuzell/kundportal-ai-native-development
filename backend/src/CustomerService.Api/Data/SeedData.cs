@@ -15,6 +15,8 @@ public static class SeedData
             Category = TicketCategory.Other,
             Priority = TicketPriority.High,
             Status = TicketStatus.New,
+            CustomerName = "Anna Andersson",
+            CustomerEmail = "anna.andersson@example.com",
             CreatedAt = new DateTimeOffset(2026, 10, 20, 8, 15, 0, TimeSpan.Zero),
         },
         new()
@@ -25,6 +27,8 @@ public static class SeedData
             Category = TicketCategory.OrdersDeliveries,
             Priority = TicketPriority.Medium,
             Status = TicketStatus.InProgress,
+            CustomerName = "Erik Lindqvist",
+            CustomerEmail = "erik.lindqvist@example.com",
             CreatedAt = new DateTimeOffset(2026, 10, 21, 10, 30, 0, TimeSpan.Zero),
         },
         new()
@@ -35,6 +39,8 @@ public static class SeedData
             Category = TicketCategory.Invoices,
             Priority = TicketPriority.Low,
             Status = TicketStatus.WaitingForCustomer,
+            CustomerName = "Maria Nilsson",
+            CustomerEmail = "maria.nilsson@example.com",
             CreatedAt = new DateTimeOffset(2026, 10, 22, 13, 45, 0, TimeSpan.Zero),
         },
         new()
@@ -45,6 +51,8 @@ public static class SeedData
             Category = TicketCategory.ReturnsComplaints,
             Priority = TicketPriority.Medium,
             Status = TicketStatus.New,
+            CustomerName = "Johan Berg",
+            CustomerEmail = "johan.berg@example.com",
             CreatedAt = new DateTimeOffset(2026, 10, 23, 7, 50, 0, TimeSpan.Zero),
         },
         new()
@@ -55,6 +63,8 @@ public static class SeedData
             Category = TicketCategory.Other,
             Priority = TicketPriority.High,
             Status = TicketStatus.InProgress,
+            CustomerName = "Sara Holm",
+            CustomerEmail = "sara.holm@example.com",
             CreatedAt = new DateTimeOffset(2026, 10, 24, 9, 0, 0, TimeSpan.Zero),
         },
     ];

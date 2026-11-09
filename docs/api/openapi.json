@@ -251,23 +251,41 @@
         "properties": {
           "title": {
             "maxLength": 200,
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "description": {
             "maxLength": 5000,
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "category": {
-            "$ref": "#/components/schemas/TicketCategory"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "priority": {
-            "$ref": "#/components/schemas/TicketPriority"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "customerName": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "customerEmail": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

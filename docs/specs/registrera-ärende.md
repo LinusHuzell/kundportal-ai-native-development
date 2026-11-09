@@ -13,19 +13,20 @@ när applikationen startas om.
 - Fält: rubrik, beskrivning, kategori, prioritet, namn, email
 - Prioritet är förifylld med "Medel" (kan ändras). Kategori har inget förval.
 - Automatiskt vid sparning: ärendenummer (id), status ("Nytt"), tidpunkt (createdAt)
-- Frontend: formulär i en drawer över ärendelistan, med validering och felmeddelanden
+- Frontend: formulär i en drawer som öppnas från knappen "Registrera ärende" i navigeringen, med validering och felmeddelanden
 - Backend: endpoint `POST /api/tickets`
 - Samma valideringsregler i frontend och backend (se Felfall)
 - Databas: kolumnerna för kundens namn och e-postadress i tabellen för ärenden (ny migration)
 
 ## Ingår inte
 - DbContext och övriga delar av databasschemat. Detta moment bygger på dem och lägger bara till kundfälten.
-- Redigering av ett befintligt ärende (se eget spec: redigera-ärende.md)
+- Redigering av ett befintligt ärende (ingår inte i denna leverans, se känd begränsning)
 - Statusändring efter registrering
 
 ## Beslut
-- Registrera öppnas i en drawer över ärendelistan.
-  Källa: Figma-mocken (gruppens designunderlag).
+- Knappen "Registrera ärende" ligger i navigeringen överst, så att ärenden kan registreras
+  från alla sidor. Drawern öppnas över den sida som visas. Avviker från Figma-mocken
+  (gruppens designunderlag), där knappen finns på listsidan. Beslutat av Carolina.
 
 ## Felfall
 Gäller både frontend och backend. Detta är den enda källan för
@@ -45,7 +46,7 @@ valideringsregler och felmeddelanden.
 | Email | Tomt eller bara mellanslag | "E-postadress måste fyllas i" |
 | Email | Fel format ³ | "Ange en giltig e-postadress" |
 
-¹ Beslutat av Carolina 2026-11-09. Gränserna 200 och 5000 tecken finns
+¹ Beslutat av Carolina. Gränserna 200 och 5000 tecken finns
 redan i databasen (`TicketConfiguration`) och i [docs/api/kontrakt.md](../api/kontrakt.md).
 Gruppen informeras och kan invända.
 
@@ -77,6 +78,16 @@ backend. Stora bokstäver normaliseras inte.
 - Then: Felmeddelandet från tabellen visas kopplat till fältet via
   aria-describedby, och inget ärende sparas
 
+**AK-11**
+- Given: Ett eller flera fält bryter mot en regel i Felfall
+- When: Formuläret skickas
+- Then: Fokus flyttas till det första fältet med fel, i formulärets ordning
+
+**AK-12**
+- Given: Formuläret har skickats och svaret från servern har inte kommit
+- When: Handläggaren väljer "Spara ärende" igen
+- Then: Inget nytt anrop skickas, och bara ett ärende sparas
+
 ### API (backend)
 
 **AK-4**
@@ -103,13 +114,13 @@ backend. Stora bokstäver normaliseras inte.
 
 **AK-8**
 - Given: Drawern är öppen
-- When: Hen trycker Esc eller väljer "Stäng"
-- Then: Drawern stängs, inget sparas, och fokus går tillbaka till knappen som öppnade den
+- When: Hen trycker Esc, väljer "Stäng" eller klickar utanför drawern
+- Then: Drawern stängs, inget sparas, och fokus går tillbaka till knappen som öppnade den. Formuläret töms, så att det är tomt med prioritet "Medel" nästa gång drawern öppnas
 
 **AK-9**
 - Given: Ett ärende har sparats
 - When: Svaret från servern är lyckat
-- Then: Drawern stängs, en bekräftelse visas som även läses upp av skärmläsare, och fokus går tillbaka till knappen som öppnade drawern
+- Then: Drawern stängs, en bekräftelse visas som även läses upp av skärmläsare, och fokus går tillbaka till knappen som öppnade drawern. Bekräftelsen visas som en toast och försvinner efter 5 sekunder, eller tidigare om drawern öppnas igen. Formuläret töms, så att det är tomt med prioritet "Medel" nästa gång drawern öppnas
 
 **AK-10**
 - Given: Drawern är öppen och alla fält är korrekt ifyllda

@@ -29,3 +29,17 @@ export interface Ticket {
 
 export type CreateTicketInput = Omit<Ticket, 'id' | 'status' | 'createdAt'>
 export type UpdateTicketInput = Partial<CreateTicketInput>
+
+// Swedish display labels, from docs/avgränsningar.md.
+export const CATEGORY_LABELS: Record<TicketCategory, string> = {
+  OrdersDeliveries: 'Beställningar/leveranser',
+  Invoices: 'Fakturor',
+  ReturnsComplaints: 'Returer/reklamation',
+  Other: 'Övrigt',
+}
+
+export const PRIORITY_LABELS: Record<TicketPriority, string> = {
+  Low: 'Låg',
+  Medium: 'Medel',
+  High: 'Hög',
+}
