@@ -54,7 +54,7 @@ Så här testas projektet. Regler och kommandon för AI-agenter finns i [AGENTS.
 
 ## Nuläge
 
-- Endpoints är stubbar, så persistenstestet går mot `DbContext`. Varje feature testar sin egen sparning via API:t.
+- Persistenstestet i `Data/` går mot `DbContext` eftersom det skrevs innan endpoints fanns. Varje feature testar sin egen sparning via API:t.
 - Den mockade sviten innehåller ett exempeltest tills frontend har feltillstånd.
 
 ## Manuella kontroller

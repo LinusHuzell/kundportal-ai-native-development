@@ -39,7 +39,7 @@ Never mock what the real stack can produce, such as a validation error or a miss
 - Integration tests use real Postgres via Testcontainers, never the EF InMemory provider or SQLite.
 - Integration test classes inherit from `IntegrationTest`. All tests share one container and one app (`Fixture.Factory`), run sequentially, and start with an empty database. When a migration adds a table, add it to `ApiFixture.ResetDatabaseAsync`.
 - Verify persistence by reading back separately, through the API or a new `DbContext` (`Fixture.CreateDbContext()`), never from the `DbContext` that wrote the data.
-- Endpoints are still stubs, so the existing persistence test uses `DbContext`. Each feature tests its own persistence through its API.
+- The persistence test in `Data/` uses `DbContext` because it was written before the endpoints existed. Each feature tests its own persistence through its API.
 
 ### Frontend
 
