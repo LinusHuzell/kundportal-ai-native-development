@@ -39,6 +39,13 @@ export const CATEGORY_LABELS: Record<TicketCategory, string> = {
   Other: 'Övrigt',
 }
 
+export const STATUS_LABELS: Record<TicketStatus, string> = {
+  New: '',
+  InProgress: '',
+  WaitingForCustomer: '',
+  Closed: '',
+}
+
 export const PRIORITY_LABELS: Record<TicketPriority, string> = {
   Low: 'Låg',
   Medium: 'Medel',

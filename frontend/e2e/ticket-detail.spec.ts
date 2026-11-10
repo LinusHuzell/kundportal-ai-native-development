@@ -1,0 +1,198 @@
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
+import { formatCreatedAt } from '../src/features/ticket-detail/formatCreatedAt.ts'
+import type { CreateTicketInput, Ticket, TicketStatus } from '../src/types/ticket.ts'
+
+// User flows for "Visa ärende och ändra status" (docs/specs/visa-ärende-och-ändra-status.md),
+// against the full stack. Each test creates its own ticket through the API.
+
+// Skapad is shown in the browser's time zone, so fix it to compare with a known zone.
+const TIME_ZONE = 'Europe/Stockholm'
+test.use({ timezoneId: TIME_ZONE })
+
+const uniqueTitle = () => `E2E ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+async function createTicket(request: APIRequestContext): Promise<Ticket> {
+  const input: CreateTicketInput = {
+    title: uniqueTitle(),
+    description: 'Varan var trasig när den kom.',
+    category: 'ReturnsComplaints',
+    priority: 'High',
+    customerName: 'Anna Andersson',
+    customerEmail: 'anna@example.com',
+  }
+  const response = await request.post('/api/tickets', { data: input })
+  expect(response.status()).toBe(201)
+  return (await response.json()) as Ticket
+}
+
+async function setStatus(request: APIRequestContext, id: number, status: TicketStatus) {
+  const response = await request.put(`/api/tickets/${id}/status`, { data: { status } })
+  expect(response.status()).toBe(200)
+}
+
+const isStatusUpdate = (method: string, url: string) =>
+  method === 'PUT' && /^\/api\/tickets\/\d+\/status$/.test(new URL(url).pathname)
+
+function recordRequests(page: Page, matches: (method: string, url: string) => boolean) {
+  const requests: string[] = []
+  page.on('request', (request) => {
+    if (matches(request.method(), request.url())) requests.push(request.url())
+  })
+  return requests
+}
+
+const main = (page: Page) => page.getByRole('main')
+const detail = (page: Page, label: string) =>
+  main(page).getByRole('definition', { name: label, exact: true })
+const statusSelect = (page: Page) => main(page).getByRole('combobox', { name: 'Status' })
+const saveButton = (page: Page) => main(page).getByRole('button', { name: 'Spara status' })
+
+async function openTicket(page: Page, ticket: Ticket) {
+  await page.goto(`/tickets/${ticket.id}`)
+  await expect(main(page).getByRole('heading', { level: 1, name: ticket.title })).toBeVisible()
+}
+
+test('AK-1: the title is the page heading and the other details have their labels', async ({
+  page,
+  request,
+}) => {
+  const ticket = await createTicket(request)
+
+  await openTicket(page, ticket)
+
+  await expect(detail(page, 'Ärendenummer')).toHaveText(String(ticket.id))
+  await expect(detail(page, 'Status')).toHaveText('Nytt')
+  await expect(detail(page, 'Prioritet')).toHaveText('Hög')
+  await expect(detail(page, 'Kategori')).toHaveText('Returer/reklamation')
+  await expect(detail(page, 'Skapad')).toHaveText(formatCreatedAt(ticket.createdAt, TIME_ZONE))
+  await expect(detail(page, 'Namn')).toHaveText(ticket.customerName)
+  await expect(detail(page, 'E-post')).toHaveText(ticket.customerEmail)
+  await expect(detail(page, 'Beskrivning')).toHaveText(ticket.description)
+})
+
+test('AK-3: an id without a ticket shows Ärendet hittades inte', async ({ page }) => {
+  await page.goto('/tickets/2147483647')
+
+  await expect(
+    main(page).getByRole('heading', { level: 1, name: 'Ärendet hittades inte' }),
+  ).toBeVisible()
+})
+
+test('AK-3: an id that is not a number shows Ärendet hittades inte without calling the API', async ({
+  page,
+}) => {
+  const requests = recordRequests(
+    page,
+    (method, url) => method === 'GET' && new URL(url).pathname.startsWith('/api/tickets/'),
+  )
+
+  await page.goto('/tickets/abc')
+
+  await expect(
+    main(page).getByRole('heading', { level: 1, name: 'Ärendet hittades inte' }),
+  ).toBeVisible()
+  expect(requests).toHaveLength(0)
+})
+
+test('AK-6: Tillbaka till ärendelistan leads from a ticket to the ticket list', async ({
+  page,
+  request,
+}) => {
+  const ticket = await createTicket(request)
+  await openTicket(page, ticket)
+
+  await main(page).getByRole('link', { name: 'Tillbaka till ärendelistan' }).click()
+
+  await expect(page).toHaveURL(/\/tickets$/)
+  await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible()
+})
+
+test('AK-6: Tillbaka till ärendelistan leads from Ärendet hittades inte to the ticket list', async ({
+  page,
+}) => {
+  await page.goto('/tickets/abc')
+  await expect(
+    main(page).getByRole('heading', { level: 1, name: 'Ärendet hittades inte' }),
+  ).toBeVisible()
+
+  await main(page).getByRole('link', { name: 'Tillbaka till ärendelistan' }).click()
+
+  await expect(page).toHaveURL(/\/tickets$/)
+  await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible()
+})
+
+test('AK-7: a new ticket has Nytt selected, all four statuses and Nytt cannot be chosen', async ({
+  page,
+  request,
+}) => {
+  const ticket = await createTicket(request)
+
+  await openTicket(page, ticket)
+
+  const select = statusSelect(page)
+  await expect(select).toHaveValue('New')
+  await expect(select.getByRole('option')).toHaveText([
+    'Nytt',
+    'Pågående',
+    'Väntar på kund',
+    'Avslutat',
+  ])
+  await expect(select.getByRole('option', { name: 'Nytt' })).toBeDisabled()
+})
+
+test('AK-7: the ticket’s current status is selected', async ({ page, request }) => {
+  const ticket = await createTicket(request)
+  await setStatus(request, ticket.id, 'WaitingForCustomer')
+
+  await openTicket(page, ticket)
+
+  await expect(statusSelect(page)).toHaveValue('WaitingForCustomer')
+})
+
+test('AK-8: saving a new status updates the details, announces it and keeps focus on the button', async ({
+  page,
+  request,
+}) => {
+  const ticket = await createTicket(request)
+  await openTicket(page, ticket)
+  await statusSelect(page).selectOption({ label: 'Väntar på kund' })
+
+  await saveButton(page).click()
+
+  await expect(main(page).getByRole('status').filter({ hasText: 'Status ändrad' })).toHaveText(
+    'Status ändrad till Väntar på kund',
+  )
+  await expect(detail(page, 'Status')).toHaveText('Väntar på kund')
+  await expect(saveButton(page)).toBeFocused()
+})
+
+test('AK-9: the new status is still shown after a reload', async ({ page, request }) => {
+  const ticket = await createTicket(request)
+  await openTicket(page, ticket)
+  await statusSelect(page).selectOption({ label: 'Avslutat' })
+  const response = page.waitForResponse((r) => isStatusUpdate(r.request().method(), r.url()))
+  await saveButton(page).click()
+  expect((await response).status()).toBe(200)
+
+  await page.reload()
+
+  await expect(detail(page, 'Status')).toHaveText('Avslutat')
+  await expect(statusSelect(page)).toHaveValue('Closed')
+})
+
+test('AK-10: saving with Nytt selected shows an error on the list, focuses it and sends nothing', async ({
+  page,
+  request,
+}) => {
+  const requests = recordRequests(page, isStatusUpdate)
+  const ticket = await createTicket(request)
+  await openTicket(page, ticket)
+
+  await saveButton(page).click()
+
+  const select = statusSelect(page)
+  await expect(select).toHaveAttribute('aria-invalid', 'true')
+  await expect(select).toHaveAccessibleDescription('Välj en ny status')
+  await expect(select).toBeFocused()
+  expect(requests).toHaveLength(0)
+})
