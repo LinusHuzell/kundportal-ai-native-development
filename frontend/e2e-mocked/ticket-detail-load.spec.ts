@@ -37,6 +37,21 @@ async function mockListTickets(page: Page, handler: (route: Route) => Promise<vo
 }
 
 const main = (page: Page) => page.getByRole('main')
+
+test('AK-22: the ticket list shows the total number of tickets', async ({ page }) => {
+  await mockListTickets(page, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([ticket]),
+    }),
+  )
+
+  await page.goto('/tickets')
+
+  await expect(main(page).getByRole('heading', { name: 'Alla ärenden (1)' })).toBeVisible()
+})
+
 test('AK-4: Laddar ärenden… is announced while the ticket list is loading', async ({ page }) => {
   let respond!: () => void
   const responseAllowed = new Promise<void>((resolve) => (respond = resolve))
@@ -82,6 +97,21 @@ test('AK-5: a server error is announced when the ticket list cannot be loaded', 
 
   await expect(main(page).getByRole('alert')).toHaveText(LOAD_FAILED)
   await expect(main(page).getByRole('heading', { level: 1, name: 'Ärenden' })).toBeVisible()
+})
+
+test('AK-22: an empty ticket list shows a zero count', async ({ page }) => {
+  await mockListTickets(page, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    }),
+  )
+
+  await page.goto('/tickets')
+
+  await expect(main(page).getByRole('heading', { name: 'Alla ärenden (0)' })).toBeVisible()
+  await expect(main(page).getByText('Inga ärenden hittades.')).toBeVisible()
 })
 
 test('AK-5: a network failure is announced when the ticket list cannot be loaded', async ({ page }) => {

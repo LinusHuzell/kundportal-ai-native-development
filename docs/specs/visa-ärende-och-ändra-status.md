@@ -150,6 +150,11 @@ Panelen visar alla etiketter och värden. Ärendets titel är en rubrik i panele
 - When: Hämtningen av det valda ärendets fullständiga uppgifter misslyckas
 - Then: "Ärendedetaljerna är inte tillgängliga." visas som alert och listan finns kvar
 
+**AK-22: Visa totalt antal ärenden**
+- Given: Ärendelistan har laddats, även om den är tom
+- When: Handläggaren visar startsidan
+- Then: Rubriken visar totalt antal ärenden inom parentes, till exempel "Alla ärenden (3)" eller "Alla ärenden (0)"
+
 ### API (backend)
 
 **AK-13** `GET /api/tickets/{id}` returnerar `200` och ärendets alla fält när ärendet finns.
@@ -174,6 +179,7 @@ Följ projektets [teststrategi](../teststrategi.md). Varje AK verifieras på bil
 |---|---|---|
 | AK-1–3, AK-6–10, AK-20 | Skapa egna ärenden via API och välj dem på startsidan; verifiera även äldre länk | E2E, full stack |
 | AK-4, AK-5, AK-11, AK-12, AK-21 | Fördröjt svar, serverfel och nätverksfel | E2E, mockat API |
+| AK-22 | Rubriken visar totalen för både fylld och tom lista | E2E, mockat API |
 | AK-13–AK-19 | HTTP-kontrakt och beständighet | Backend integration |
 | AK-17, AK-18 | Statusregelns gränsfall | Backend unit |
 

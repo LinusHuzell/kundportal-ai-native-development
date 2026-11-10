@@ -118,7 +118,7 @@ export default function TicketListPage() {
           aria-labelledby="ticket-queue-title"
         >
           <h2 className="border-b border-line px-5 py-[18px] text-base font-semibold text-white" id="ticket-queue-title">
-            Alla ärenden
+            Alla ärenden{state.status === 'loaded' ? ` (${state.tickets.length})` : ''}
           </h2>
 
           {state.status === 'loading' && (
