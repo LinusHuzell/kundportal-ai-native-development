@@ -22,6 +22,7 @@ Handläggaren väljer ett ärende på startsidan och ser dess uppgifter i panele
 - Visa historik i den valda ärendepanelen.
 - Omdirigera äldre länkar till `/tickets/{id}` till listan och välja ärendet om det finns.
 - Befintliga backend-endpoints och statusregler.
+- Full skapandetid på ärenderadens datum vid hover och tangentbordsfokus.
 
 ## Ingår inte
 
@@ -40,6 +41,7 @@ Handläggaren väljer ett ärende på startsidan och ser dess uppgifter i panele
 - Ett ärende kan byta mellan alla statusar, men aldrig tillbaka till "Nytt". "Nytt" sätts bara när ärendet registreras.
 - Att spara samma status är inget fel. Svaret är `200` och ärendet är oförändrat.
 - Status sparas med knappen "Spara status", inte när ett värde väljs.
+- Knappen "Spara status" har en dekorativ diskettikon före texten.
 - "Nytt" visas i statuslistan men går inte att välja.
 - Äldre `/tickets/{id}`-länkar väljer ärendet om det finns i listan. Om det saknas används listans normala val.
 
@@ -155,6 +157,25 @@ Panelen visar alla etiketter och värden. Ärendets titel är en rubrik i panele
 - When: Handläggaren visar startsidan
 - Then: Rubriken visar totalt antal ärenden inom parentes, till exempel "Alla ärenden (3)" eller "Alla ärenden (0)"
 
+### Skapandetid i listan
+
+**AK-23: Full tidsstämpel vid hover**
+- Given: Ett ärende finns i listan med ett kort svenskt skapandedatum
+- When: Handläggaren håller pekaren över datumet
+- Then: En tooltip visar svenskt långt datum, timmar, minuter, sekunder och tidszon i webbläsarens lokala tidszon; det korta datumet är kvar
+- And: Tooltipen förblir synlig när pekaren flyttas över den och stängs när pekaren lämnar datumet och tooltipen, om raden inte har tangentbordsfokus
+
+**AK-24: Full tidsstämpel med tangentbord**
+- Given: Ett ärende finns i listan
+- When: Ärenderaden får tangentbordsfokus
+- Then: Samma tooltip visas och tidsstämpeln är radens tillgängliga beskrivning, utan ett extra tabbstopp
+- And: Tooltipen stängs när fokus lämnar raden, om pekaren inte är över datumet eller tooltipen
+
+**AK-25: Stäng tooltip med Escape**
+- Given: Tooltipen visas vid hover eller tangentbordsfokus
+- When: Handläggaren trycker Escape
+- Then: Tooltipen stängs utan att fokus eller valt ärende ändras; den öppnas igen vid ny hover eller nytt fokus
+
 ### API (backend)
 
 **AK-13** `GET /api/tickets/{id}` returnerar `200` och ärendets alla fält när ärendet finns.
@@ -180,7 +201,14 @@ Följ projektets [teststrategi](../teststrategi.md). Varje AK verifieras på bil
 | AK-1–3, AK-6–10, AK-20 | Skapa egna ärenden via API och välj dem på startsidan; verifiera även äldre länk | E2E, full stack |
 | AK-4, AK-5, AK-11, AK-12, AK-21 | Fördröjt svar, serverfel och nätverksfel | E2E, mockat API |
 | AK-22 | Rubriken visar totalen för både fylld och tom lista | E2E, mockat API |
+| AK-23–25 | Eget ärende via API; hover, fokus, Escape och oförändrat kort datum | E2E, full stack |
 | AK-13–AK-19 | HTTP-kontrakt och beständighet | Backend integration |
 | AK-17, AK-18 | Statusregelns gränsfall | Backend unit |
 
 Manuell kontroll: tangentbord och skärmläsare för fokus och live-meddelanden.
+
+## Ändringshistorik
+
+| Datum | Ändring | Ansvarig |
+|---|---|---|
+| 2026-11-10 | AK-23–25: lång lokal tidsstämpel som tillgänglig tooltip i listan, enligt användarens godkännande | GitHub Copilot |

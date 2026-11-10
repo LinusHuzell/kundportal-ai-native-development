@@ -23,6 +23,10 @@ type SelectedTicketResult = { id: number } & (
 )
 
 const createdDateFormatter = new Intl.DateTimeFormat('sv-SE', { dateStyle: 'medium' })
+const createdTimestampFormatter = new Intl.DateTimeFormat('sv-SE', {
+  dateStyle: 'long',
+  timeStyle: 'long',
+})
 const statusClassNames: Record<TicketStatus, string> = {
   New: 'bg-blue-500/15 text-blue-300',
   InProgress: 'bg-amber-500/15 text-amber-300',
@@ -46,6 +50,20 @@ export default function TicketListPage() {
       : null,
   )
   const [selectedTicketResult, setSelectedTicketResult] = useState<SelectedTicketResult>()
+  const [hoveredDateId, setHoveredDateId] = useState<number | null>(null)
+  const [focusedRowId, setFocusedRowId] = useState<number | null>(null)
+  const [dismissedTimestampId, setDismissedTimestampId] = useState<number | null>(null)
+  const activeTimestampId = hoveredDateId ?? focusedRowId
+
+  useEffect(() => {
+    if (activeTimestampId === null) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDismissedTimestampId(activeTimestampId)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [activeTimestampId])
 
   useEffect(() => {
     let active = true
@@ -142,18 +160,27 @@ export default function TicketListPage() {
             >
               {state.tickets.map((ticket) => {
                 const isSelected = ticket.id === selectedTicketId
+                const timestampId = `ticket-created-at-${ticket.id}`
+                const isTimestampVisible = activeTimestampId === ticket.id
+                  && dismissedTimestampId !== ticket.id
 
                 return (
                   <button
                     type="button"
-                    className={`block w-full rounded-md border p-[14px] text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal ${
+                    className={`relative block w-full rounded-md border p-[14px] text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal ${
                       isSelected
                         ? 'border-teal bg-[#1b3048] shadow-[inset_3px_0_0_#2fb1a5]'
                         : 'border-white/10 bg-gradient-to-r from-panel to-[#14253a] hover:border-white/25'
                     }`}
                     key={ticket.id}
                     aria-label={`${ticket.ticketNumber}: ${ticket.title}`}
+                    aria-describedby={timestampId}
                     aria-pressed={isSelected}
+                    onFocus={() => {
+                      setFocusedRowId(ticket.id)
+                      setDismissedTimestampId(null)
+                    }}
+                    onBlur={() => setFocusedRowId(null)}
                     onClick={() => setSelectedTicketId(ticket.id)}
                   >
                     <span className="flex items-center justify-between gap-2.5">
@@ -203,6 +230,11 @@ export default function TicketListPage() {
                       <time
                         className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] text-copy-dim"
                         dateTime={ticket.createdAt}
+                        onMouseEnter={() => {
+                          setHoveredDateId(ticket.id)
+                          setDismissedTimestampId(null)
+                        }}
+                        onMouseLeave={() => setHoveredDateId(null)}
                       >
                         <svg
                           aria-hidden="true"
@@ -217,7 +249,15 @@ export default function TicketListPage() {
                           <rect x="3" y="5" width="18" height="16" rx="2" />
                           <path d="M16 3v4M8 3v4M3 11h18" />
                         </svg>
-                        {createdDateFormatter.format(new Date(ticket.createdAt))}
+                        <span>{createdDateFormatter.format(new Date(ticket.createdAt))}</span>
+                        <span
+                          id={timestampId}
+                          role="tooltip"
+                          hidden={!isTimestampVisible}
+                          className="absolute right-3 bottom-10 z-10 w-[calc(100%-1.5rem)] max-w-64 whitespace-normal rounded border border-line bg-portal px-3 py-2 text-xs leading-relaxed text-white shadow-lg"
+                        >
+                          {createdTimestampFormatter.format(new Date(ticket.createdAt))}
+                        </span>
                       </time>
                     </span>
                   </button>

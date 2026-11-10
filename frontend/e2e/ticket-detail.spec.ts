@@ -82,6 +82,99 @@ test('AK-3: an unknown legacy ticket URL redirects to the list', async ({ page }
   await expect(main(page).getByRole('heading', { name: 'Ärenden', exact: true })).toBeVisible()
 })
 
+const longCreatedAt = (createdAt: string) =>
+  new Intl.DateTimeFormat('sv-SE', {
+    dateStyle: 'long',
+    timeStyle: 'long',
+    timeZone: TIME_ZONE,
+  }).format(new Date(createdAt))
+
+test('AK-23: hovering the list date shows the full local timestamp and keeps the short date', async ({
+  page,
+  request,
+}) => {
+  const ticket = await createTicket(request)
+  await page.goto('/tickets')
+  const row = main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` })
+  const shortDate = new Intl.DateTimeFormat('sv-SE', {
+    dateStyle: 'medium',
+    timeZone: TIME_ZONE,
+  }).format(new Date(ticket.createdAt))
+  const date = row.getByText(shortDate, { exact: true })
+  const tooltip = row.getByRole('tooltip')
+
+  await expect(tooltip).toBeHidden()
+  await date.hover()
+
+  await expect(tooltip).toBeVisible()
+  await expect(tooltip).toHaveText(longCreatedAt(ticket.createdAt))
+  await expect(date).toBeVisible()
+  await tooltip.hover()
+  await expect(tooltip).toBeVisible()
+  await page.getByRole('heading', { name: 'Ärenden', exact: true }).hover()
+  await expect(tooltip).toBeHidden()
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await date.hover()
+  await expect(tooltip).toBeVisible()
+  const rowBounds = await row.boundingBox()
+  const tooltipBounds = await tooltip.boundingBox()
+  expect(rowBounds).not.toBeNull()
+  expect(tooltipBounds).not.toBeNull()
+  expect(tooltipBounds!.x).toBeGreaterThanOrEqual(rowBounds!.x)
+  expect(tooltipBounds!.x + tooltipBounds!.width).toBeLessThanOrEqual(
+    rowBounds!.x + rowBounds!.width,
+  )
+})
+
+test('AK-24: focusing the row shows and describes its full timestamp without another tab stop', async ({
+  page,
+  request,
+}) => {
+  const ticket = await createTicket(request)
+  await page.goto('/tickets')
+  const row = main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` })
+  await row.focus()
+
+  await expect(row.getByRole('tooltip')).toBeVisible()
+  await expect(row).toHaveAccessibleDescription(longCreatedAt(ticket.createdAt))
+  await page.keyboard.press('Tab')
+  await expect(row).not.toBeFocused()
+  await expect(row.getByRole('tooltip')).toBeHidden()
+})
+
+test('AK-25: Escape dismisses the timestamp without changing selection or focus', async ({
+  page,
+  request,
+}) => {
+  const ticket = await createTicket(request)
+  await openTicket(page, ticket)
+  const row = main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` })
+  await row.focus()
+  const tooltip = row.getByRole('tooltip')
+  await expect(tooltip).toBeVisible()
+
+  await page.keyboard.press('Escape')
+
+  await expect(tooltip).toBeHidden()
+  await expect(row).toBeFocused()
+  await expect(row).toHaveAttribute('aria-pressed', 'true')
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Shift+Tab')
+  await expect(row).toBeFocused()
+  await expect(tooltip).toBeVisible()
+
+  await page.keyboard.press('Tab')
+  await row.getByText(new Intl.DateTimeFormat('sv-SE', {
+    dateStyle: 'medium',
+    timeZone: TIME_ZONE,
+  }).format(new Date(ticket.createdAt)), { exact: true }).hover()
+  await expect(tooltip).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(tooltip).toBeHidden()
+  await expect(row).toHaveAttribute('aria-pressed', 'true')
+})
+
 test('AK-3: an invalid legacy ticket URL redirects without a ticket API request', async ({
   page,
 }) => {
