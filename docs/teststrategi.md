@@ -5,6 +5,7 @@ Så här testas projektet. Regler och kommandon för AI-agenter finns i [AGENTS.
 ## Principer
 
 - Varje test är litet och självförklarande och testar en enda sak.
+- Parametriserade tester (till exempel `[Theory]` och `it.each`) är okej för små, närliggande fall av samma regel med samma förväntade resultat, till exempel flera ogiltiga värden som ger samma felmeddelande. Olika regler och resultat testas i separata tester.
 - Tester utgår från krav och acceptanskriterier i specen. Undantag är tester av intern logik och regressionstester för buggar.
 - Varje krav och acceptanskriterium i specen har minst ett test. Undantag är visuella krav som inte går att testa automatiskt, och de kontrolleras manuellt.
 - Ett fel testas på den billigaste nivån som kan fånga det.
@@ -53,8 +54,7 @@ Så här testas projektet. Regler och kommandon för AI-agenter finns i [AGENTS.
 
 ## Nuläge
 
-- Endpoints är stubbar, så persistenstestet går mot `DbContext`. Varje feature testar sin egen sparning via API:t.
-- Den mockade sviten innehåller ett exempeltest tills frontend har feltillstånd.
+- Persistenstestet i `Data/` går mot `DbContext` eftersom det skrevs innan endpoints fanns. Varje feature testar sin egen sparning via API:t.
 
 ## Manuella kontroller
 

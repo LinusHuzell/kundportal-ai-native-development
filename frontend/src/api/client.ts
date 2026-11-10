@@ -3,7 +3,8 @@
 import type { CreateTicketInput, Ticket, TicketStatus, UpdateTicketInput } from '../types/ticket.ts'
 
 /**
- * API client. createTicket follows docs/api/kontrakt.md; the other methods are still stubs.
+ * API client. createTicket, getTicket and updateTicketStatus follow docs/api/kontrakt.md; the
+ * other methods are still stubs.
  * Base URL is configured via VITE_API_BASE_URL (see .env.example).
  */
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
@@ -73,7 +74,7 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
 
 export const api = {
   listTickets: async (): Promise<Ticket[]> => notImplemented('listTickets'),
-  getTicket: async (_id: number): Promise<Ticket> => notImplemented('getTicket'),
+  getTicket: (id: number): Promise<Ticket> => request<Ticket>(`/tickets/${id}`, { method: 'GET' }),
   createTicket: (input: CreateTicketInput): Promise<Ticket> =>
     request<Ticket>('/tickets', {
       method: 'POST',
@@ -82,6 +83,10 @@ export const api = {
     }),
   updateTicket: async (_id: number, _input: UpdateTicketInput): Promise<Ticket> =>
     notImplemented('updateTicket'),
-  updateTicketStatus: async (_id: number, _status: TicketStatus): Promise<Ticket> =>
-    notImplemented('updateTicketStatus'),
+  updateTicketStatus: (id: number, status: TicketStatus): Promise<Ticket> =>
+    request<Ticket>(`/tickets/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    }),
 }

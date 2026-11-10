@@ -457,7 +457,10 @@
         "type": "object",
         "properties": {
           "status": {
-            "$ref": "#/components/schemas/TicketStatus"
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
