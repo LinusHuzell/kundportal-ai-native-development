@@ -140,8 +140,40 @@ export default function CreateTicketDrawer({ onClose, onSaved }: Props) {
     }
   }
 
+  const fieldIcon = (field: Field) => {
+    switch (field) {
+      case 'title':
+        return <path d="M4 6h16M4 12h10M4 18h16" />
+      case 'description':
+        return <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M8 13h8M8 17h8" /></>
+      case 'category':
+        return <path d="M20.6 13.4 11 3.8H4v7l9.6 9.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8ZM7.5 7.5h.01" />
+      case 'priority':
+        return <path d="M5 21V4m0 1h14l-3 5 3 5H5" />
+      case 'customerName':
+        return <><circle cx="12" cy="8" r="4" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></>
+      case 'customerEmail':
+        return <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>
+    }
+  }
+
   const label = (field: Field, text: string) => (
-    <label htmlFor={`${id}-${field}`} className="block text-sm font-medium text-copy-muted">
+    <label
+      htmlFor={`${id}-${field}`}
+      className="flex items-center gap-2 text-sm font-medium text-copy-muted"
+    >
+      <svg
+        aria-hidden="true"
+        className="size-4 shrink-0 text-copy-dim"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+        viewBox="0 0 24 24"
+      >
+        {fieldIcon(field)}
+      </svg>
       {text}
     </label>
   )

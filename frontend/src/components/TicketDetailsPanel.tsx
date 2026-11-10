@@ -5,11 +5,38 @@ import {
   STATUS_LABELS,
   type Ticket,
 } from '../types/ticket'
+import TicketStatusIcon from './TicketStatusIcon'
 
 const createdDateFormatter = new Intl.DateTimeFormat('sv-SE', {
   dateStyle: 'medium',
   timeStyle: 'short',
 })
+
+type FieldIconName = 'category' | 'priority' | 'date' | 'name' | 'email'
+
+function FieldLabel({ icon, children }: { icon: FieldIconName; children: ReactNode }) {
+  return (
+    <dt className="flex items-center gap-1.5 text-xs text-copy-dim">
+      <svg
+        aria-hidden="true"
+        className="size-3.5 shrink-0"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+        viewBox="0 0 24 24"
+      >
+        {icon === 'category' && <path d="M20.6 13.4 11 3.8H4v7l9.6 9.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8ZM7.5 7.5h.01" />}
+        {icon === 'priority' && <path d="M5 21V4m0 1h14l-3 5 3 5H5" />}
+        {icon === 'date' && <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>}
+        {icon === 'name' && <><circle cx="12" cy="8" r="4" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></>}
+        {icon === 'email' && <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>}
+      </svg>
+      {children}
+    </dt>
+  )
+}
 
 interface Props {
   ticket: Ticket | null
@@ -53,19 +80,22 @@ export default function TicketDetailsPanel({
 
           <dl className="grid grid-cols-2 gap-x-4 gap-y-5 p-5 text-sm">
             <div>
-              <dt className="text-xs text-copy-dim">Kategori</dt>
+              <FieldLabel icon="category">Kategori</FieldLabel>
               <dd className="mt-1 font-medium text-white">{CATEGORY_LABELS[ticket.category]}</dd>
             </div>
             <div>
-              <dt className="text-xs text-copy-dim">Prioritet</dt>
+              <FieldLabel icon="priority">Prioritet</FieldLabel>
               <dd className="mt-1 font-medium text-white">{PRIORITY_LABELS[ticket.priority]}</dd>
             </div>
             <div>
-              <dt className="text-xs text-copy-dim">Status</dt>
+              <dt className="flex items-center gap-1.5 text-xs text-copy-dim">
+                <TicketStatusIcon status={ticket.status} className="size-3.5 shrink-0" />
+                Status
+              </dt>
               <dd className="mt-1 font-medium text-white">{STATUS_LABELS[ticket.status]}</dd>
             </div>
             <div>
-              <dt className="text-xs text-copy-dim">Skapad</dt>
+              <FieldLabel icon="date">Skapad</FieldLabel>
               <dd className="mt-1 font-medium text-white">
                 {createdDateFormatter.format(new Date(ticket.createdAt))}
               </dd>
@@ -76,13 +106,13 @@ export default function TicketDetailsPanel({
             <h3 className="mb-3 text-sm font-semibold text-white">Kund</h3>
             <dl className="grid gap-3 text-sm">
               <div>
-                <dt className="text-xs text-copy-dim">Namn</dt>
+                <FieldLabel icon="name">Namn</FieldLabel>
                 <dd className="mt-1 break-words text-copy-muted">
                   {ticket.customerName || 'Uppgift saknas'}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-copy-dim">E-post</dt>
+                <FieldLabel icon="email">E-post</FieldLabel>
                 <dd className="mt-1 break-all text-copy-muted">
                   {ticket.customerEmail || 'Uppgift saknas'}
                 </dd>

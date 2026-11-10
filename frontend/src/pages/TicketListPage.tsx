@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { api } from '../api/client'
 import TicketDetailsPanel from '../components/TicketDetailsPanel'
+import TicketStatusIcon from '../components/TicketStatusIcon'
 import TicketHistory from '../features/ticket-detail/TicketHistory'
 import StatusForm from '../features/ticket-detail/StatusForm'
 import {
@@ -156,10 +157,36 @@ export default function TicketListPage() {
                     onClick={() => setSelectedTicketId(ticket.id)}
                   >
                     <span className="flex items-center justify-between gap-2.5">
-                      <span className="text-[10px] font-bold text-teal">{ticket.ticketNumber}</span>
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-teal">
+                        <svg
+                          aria-hidden="true"
+                          className="size-3 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.7"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M4 9h16M4 15h16M10 3 8 21m8-18-2 18" />
+                        </svg>
+                        {ticket.ticketNumber}
+                      </span>
                       <span
-                        className={`inline-flex min-h-[22px] items-center whitespace-nowrap rounded px-2 text-[10px] font-semibold ${priorityClassNames[ticket.priority]}`}
+                        className={`inline-flex min-h-[22px] items-center gap-1.5 whitespace-nowrap rounded px-2 text-[10px] font-semibold ${priorityClassNames[ticket.priority]}`}
                       >
+                        <svg
+                          aria-hidden="true"
+                          className="size-3.5 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.7"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M5 21V4m0 1h14l-3 5 3 5H5" />
+                        </svg>
                         {PRIORITY_LABELS[ticket.priority]}
                       </span>
                     </span>
@@ -170,10 +197,26 @@ export default function TicketListPage() {
                       <span
                         className={`inline-flex min-h-[22px] items-center gap-1.5 whitespace-nowrap rounded px-2 text-[10px] font-semibold ${statusClassNames[ticket.status]}`}
                       >
-                        <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
+                        <TicketStatusIcon status={ticket.status} className="size-3.5 shrink-0" />
                         {STATUS_LABELS[ticket.status]}
                       </span>
-                      <time className="whitespace-nowrap text-[10px] text-copy-dim" dateTime={ticket.createdAt}>
+                      <time
+                        className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] text-copy-dim"
+                        dateTime={ticket.createdAt}
+                      >
+                        <svg
+                          aria-hidden="true"
+                          className="size-3.5 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.7"
+                          viewBox="0 0 24 24"
+                        >
+                          <rect x="3" y="5" width="18" height="16" rx="2" />
+                          <path d="M16 3v4M8 3v4M3 11h18" />
+                        </svg>
                         {createdDateFormatter.format(new Date(ticket.createdAt))}
                       </time>
                     </span>
