@@ -1,0 +1,166 @@
+# Spec: Ärendehistorik, grund
+
+Ägare: Sebastian
+Senast uppdaterad: 2026-11-10
+
+## Sammanfattning
+
+En handläggare ska på ett ärendes detaljsida kunna se vad som har hänt med ärendet och när. Den här specen loggar bara att ärendet registrerades. Statusändring och redigering hör till en kommande spec. Historiken är en enkel, skrivskyddad händelselogg.
+
+Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
+
+## Mål
+
+- Handläggaren kan se att och när ett ärende registrerades, på detaljsidan.
+- Historiken finns kvar efter omstart av applikationen.
+- Modellen kan utökas med fler händelsetyper utan att befintlig data eller API ändras.
+
+## Ingår
+
+- En händelsetyp: ärendet registrerades (`Created`).
+- Backend skapar händelsen automatiskt när ett ärende registreras.
+- Endpoint som returnerar ett ärendes historik, som en lista.
+- Frontend: lista med händelser på ärendets detaljsida.
+- Beständig lagring av händelserna (ny tabell, ny migration).
+
+## Ingår inte
+
+- Händelser för statusändring och redigering. De beskrivs i en egen spec när det finns stöd för att uppdatera status.
+- Versionshistorik: vilka fält som ändrades och deras gamla och nya värden (se [avgränsningar](../avgränsningar.md)).
+- Vem som gjorde ändringen, eftersom inloggning saknas.
+- Kommentarer, anteckningar och manuella händelser.
+- Redigering eller radering av händelser.
+- Filtrering, sökning och paginering.
+- Registrering av ärenden. Den ägs av [registrera ärende](registrera-ärende.md), den här specen bygger på den.
+
+## Användare och förutsättningar
+
+- **Användare/roll:** Handläggare.
+- **Förutsättningar:** Ärendet finns.
+- **Beroenden:** [Registrera ärende](registrera-ärende.md) och en detaljsida för ärenden.
+
+## Begrepp och tillåtna värden
+
+| Begrepp/fält | Betydelse | Tillåtna värden eller källa |
+|---|---|---|
+| Händelse | En post i ett ärendes historik | Skapas bara av backend |
+| `type` | Vilken sorts händelse | `Created`. Fler värden läggs till senare |
+| `occurredAt` | När händelsen inträffade, serverns tid i UTC | ISO 8601 |
+
+## Regler och fel
+
+| Fält eller situation | Regel | Förväntat resultat/felmeddelande | Källa eller beslut |
+|---|---|---|---|
+| Registrering | Ett ärende sparas | En `Created`-händelse skapas med samma tidpunkt som ärendets `createdAt` | D-1 |
+| Misslyckad registrering | Anropet ger `400` | Inget ärende och ingen händelse sparas | [Registrera ärende](registrera-ärende.md) |
+| Okänt ärende | `GET /api/tickets/{id}/history` med ett id som inte finns | `404` `problem+json` | [API-kontraktet](../api/kontrakt.md) |
+| Ordning | Händelser listas nyast först. Vid samma tidpunkt gäller högst id först | Ordningen är entydig | D-2 |
+| Atomicitet | Ärendet och dess händelse sparas tillsammans | Antingen sparas båda eller ingen | D-3 |
+
+## Acceptanskriterier
+
+### Händelser skapas
+
+**AK-1: Registrering loggas**
+- Given: Ett giltigt ärende registreras
+- When: Ärendet sparas
+- Then: Historiken för ärendet innehåller en händelse av typen `Created` med samma tidpunkt som ärendets `createdAt`
+
+**AK-2: Misslyckad registrering loggas inte**
+- Given: Ett ärende som bryter mot en regel i [registrera ärende](registrera-ärende.md)
+- When: Anropet avvisas med `400`
+- Then: Inget ärende och ingen händelse sparas
+
+### API (backend)
+
+**AK-3: Hämta historik**
+- Given: Ett registrerat ärende
+- When: `GET /api/tickets/{id}/history` anropas
+- Then: Svaret är `200` med en lista som innehåller en `Created`-händelse
+
+**AK-4: Okänt ärende**
+- Given: Ett id som inte finns
+- When: `GET /api/tickets/{id}/history` anropas
+- Then: Svaret är `404` `problem+json`
+
+**AK-5: Historiken finns kvar**
+- Given: Ett ärende med en `Created`-händelse
+- When: Applikationen startas om
+- Then: Händelsen finns kvar
+
+### Detaljsida (frontend)
+
+**AK-6: Historik visas**
+- Given: Handläggaren öppnar ett ärendes detaljsida
+- When: Sidan har laddats
+- Then: Historiken visas som en lista med tidpunkt och beskrivningen "Ärendet registrerades"
+
+**AK-7: Historiken kunde inte hämtas**
+- Given: Handläggaren öppnar detaljsidan
+- When: Servern svarar med ett serverfel (5xx) eller inte går att nå
+- Then: Meddelandet "Historiken kunde inte hämtas. Försök igen." visas i stället för listan, och resten av detaljsidan fungerar
+
+## API- och datakontrakt
+
+- **Endpoint/händelse:** `GET /api/tickets/{id}/history`
+- **Inkommande data:** Ingen, bara `id` i sökvägen.
+- **Lyckat svar:** `200` med en lista av händelser, nyast först:
+
+  ```json
+  [
+    {
+      "type": "Created",
+      "occurredAt": "2026-11-10T09:00:00Z"
+    }
+  ]
+  ```
+
+- **Fel:** `404` `problem+json` utan `errors` om ärendet inte finns.
+- **Beständighet:** Händelserna sparas i en egen tabell kopplad till ärendet och finns kvar efter omstart.
+- **Källor:** [API-kontrakt](../api/kontrakt.md). Kontraktet och `openapi.json` ska uppdateras när endpointen läggs till.
+
+## Tillgänglighet och andra kvalitetskrav
+
+- **Tillgänglighet:** Historiken är en lista (`ul`) med en rubrik. Tidpunkten är ett `time`-element. Felmeddelandet i AK-7 läses upp av skärmläsare.
+- **Integritet/säkerhet:** Historiken innehåller inga personuppgifter utöver det som redan finns i ärendet.
+- **Övrigt:** Inga särskilda krav.
+
+## Beslut och antaganden
+
+| ID | Beslut eller antagande | Motivering/källa | Ansvarig | Status |
+|---|---|---|---|---|
+| D-1 | Den här specen loggar bara registrering. Statusändring och redigering får en egen spec | Låg komplexitet. Redigering och statusändring ägs av andra och är inte klara | Sebastian | Beslutat |
+| D-2 | Nyast först | Samma ordning som ärendelistan. Behövs när fler händelser finns | Sebastian | Beslutat |
+| D-3 | Ärendet och händelsen sparas i samma transaktion | Annars kan historiken och ärendet bli osynkade | Sebastian | Beslutat |
+
+## Öppna frågor
+
+Inga.
+
+## Verifiering
+
+Följ projektets [teststrategi](../teststrategi.md).
+
+| Krav/AK | Verifiering | Nivå | Automatiskt eller manuellt |
+|---|---|---|---|
+| AK-1 | Registrering skapar `Created`, läses tillbaka via API | Integration | Automatisk |
+| AK-2 | `400` sparar ingen händelse | Integration | Automatisk |
+| AK-3 | Historik hämtas för ett registrerat ärende | Integration | Automatisk |
+| AK-4 | `404` `problem+json` för okänt ärende | Integration | Automatisk |
+| AK-5 | Läs tillbaka via ny `DbContext` (`Fixture.CreateDbContext()`) | Integration | Automatisk |
+| AK-6 | Händelsen visas på detaljsidan | Frontend unit och E2E | Automatisk |
+| AK-7 | Serverfel och nätverksfel vid hämtning (kan inte skapas av riktiga stacken på begäran) | E2E med mockat API | Automatisk |
+| Tillgänglighet | Lista, rubrik och `time`-element | Manuell kontroll med skärmläsare | Manuell |
+
+## Referenser
+
+- [Arbetssätt](../arbetssätt.md)
+- [Avgränsningar](../avgränsningar.md)
+- [API-kontrakt](../api/kontrakt.md)
+- [Registrera ärende](registrera-ärende.md)
+
+## Ändringshistorik
+
+| Datum | Ändring | Ansvarig |
+|---|---|---|
+| 2026-11-10 | Första utkast. Avgränsat till registrering, omdöpt till "grund" | Sebastian |
