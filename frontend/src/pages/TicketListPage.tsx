@@ -31,7 +31,7 @@ const statusClassNames: Record<TicketStatus, string> = {
 const priorityClassNames: Record<TicketPriority, string> = {
   Low: 'bg-slate-500/15 text-copy-muted',
   Medium: 'bg-amber-500/15 text-amber-300',
-  High: 'bg-red-600/15 text-red-400',
+  High: 'bg-red-600/15 text-red-300',
 }
 
 export default function TicketListPage() {

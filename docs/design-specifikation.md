@@ -89,8 +89,14 @@ Turkos.
 ### Nedtonad text
 
 ```text
-#7E8B9A
+#B8C4D2
 ```
+
+## Kontrast
+
+- All vanlig text ska ha minst 4,5:1 i kontrast mot sin bakgrund; stor text minst 3:1.
+- Textfärger ska väljas efter den faktiska bakgrunden. Den nedtonade textfärgen får inte användas där den inte når kontrastkravet.
+- Ljus text används på de mörkblå ytorna. Mörk text används bara på ljusa ytor och formulärkontroller.
 
 ---
 
