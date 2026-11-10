@@ -24,7 +24,7 @@ och finns kvar när sidan laddas om.
   bara när ärendet registreras. Beslutat i teamet.
 - Att sätta samma status som ärendet redan har är inget fel. Svaret är `200` och ärendet
   är oförändrat.
-- Ärendenumret är ärendets `id`. Det är samma värde som i sidans adress.
+- Ärendenumret är ärendets `ticketNumber`, t.ex. "SR-2026-1004". Sidans adress använder `id`.
 - "Nytt" visas i statuslistan men går inte att välja. Listan visar alltid ärendets
   aktuella status, och skärmläsare läser upp att alternativet inte är tillgängligt.
 - Statusen sparas med knappen "Spara status", inte direkt när ett värde väljs. Annars
@@ -37,7 +37,7 @@ Etiketterna på detaljsidan och hur värdena visas:
 | Etikett | Värde |
 |---|---|
 | (sidrubrik) | Rubrik |
-| Ärendenummer | `id` |
+| Ärendenummer | `ticketNumber`, t.ex. "SR-2026-1004" |
 | Status | Nytt, Pågående, Väntar på kund, Avslutat |
 | Prioritet | Låg, Medel, Hög |
 | Kategori | Beställningar/leveranser, Fakturor, Returer/reklamation, Övrigt |
