@@ -75,3 +75,18 @@ Report coverage but never enforce it (no thresholds, no tests written to raise a
 Run Playwright only through the commands above. Plain `npx playwright test` also runs the full-stack suite without a backend.
 
 CI: Backend CI runs row 1 and the `openapi.json` check, Frontend CI rows 2 and 3, E2E row 4 on changes to frontend, backend or the test stack. Run the tests your change affects and report the actual output. Never claim something works without running it.
+
+## Accessibility
+
+All frontend code follows WCAG 2.2 AA.
+
+- Semantic HTML first (`<button>`, not `<div onClick>`).
+- Every form field has an associated `<label>`.
+- Error messages are linked to their field with `aria-describedby`.
+- Everything interactive works with the keyboard and has a visible focus state.
+- Color is never the only carrier of meaning (status and priority also need text).
+- Icon-only buttons have an accessible name (`aria-label`).
+- The page language is Swedish (`<html lang="sv">`). Mark English parts with `lang="en"`.
+
+AI output often misses ARIA attributes and keyboard behavior unless asked. Check these when
+reviewing generated code.

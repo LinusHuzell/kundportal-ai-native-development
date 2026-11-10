@@ -55,3 +55,10 @@ Så här testas projektet. Regler och kommandon för AI-agenter finns i [AGENTS.
 
 - Endpoints är stubbar, så persistenstestet går mot `DbContext`. Varje feature testar sin egen sparning via API:t.
 - Den mockade sviten innehåller ett exempeltest tills frontend har feltillstånd.
+
+## Manuella kontroller
+
+- Automatiska tester kan kontrollera roll och text i en live region (`role="status"`,
+  `role="alert"`), men inte att en skärmläsare faktiskt läser upp den.
+- Ny interaktiv UI kontrolleras en gång med skärmläsare (VoiceOver) och bara tangentbord.
+  Resultatet skrivs i PR:en.
