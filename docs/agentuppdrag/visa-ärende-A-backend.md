@@ -234,3 +234,25 @@ platshållarfelet. Integrationstesterna ska falla på statuskoden `501`.
 9. **Hjälpfunktion i testerna.** Att skapa ett ärende via `POST` behövs i båda integrationsklasserna.
    Jag lägger en privat hjälpfunktion i varje klass i stället för att ändra `CreateTicketTests.cs`
    eller lägga till en delad fil. Säg till om du hellre vill ha en ny delad hjälpfil i samma mapp.
+
+## 3. Kontrollpunkter
+
+### Kontrollpunkt 1: planen (2026-11-10)
+Godkänd utan ändringar. Svar på agentens oklarheter: ett enhetsfall för saknat och `null`
+(`{}` täcks i integrationstestet), två tester för AK-15 (svar och persistens), förstatusen
+`InProgress` sätts via `PUT` och kontrolleras med `GET`, trasig JSON och `/api/tickets/abc`
+testas inte, `"   "` och `"1"` räknas som ogiltiga, en privat hjälpfunktion per testklass.
+Inaktuell text i `AGENTS.md` och `docs/teststrategi.md` rättas separat.
+
+### Kontrollpunkt 2: röda tester (2026-11-10)
+Körde `dotnet test` själv och fick samma utfall som agenten: 11 enhetstester och 10
+integrationstester faller på påståenden, inga kompileringsfel, alla befintliga gröna.
+
+Granskningen hittade en brist: AK-13 jämförde hela `POST`-svaret med `GET`-svaret. `createdAt`
+i `POST`-svaret har sju decimaler, men Postgres sparar sex, så testet hade fallit på
+tidsstämpeln och inte på beteendet. Felet doldes av att endpointen gav `501`. Ändrat så att
+övriga fält jämförs exakt och `createdAt` med 1 µs tolerans, Postgres precision. Testet är
+fortfarande rött på `501`.
+
+Känd begränsning: `POST`-svarets `createdAt` har högre precision än det som sparas.
+Toleransen finns kvar tills det rättas där ärendet skapas.
