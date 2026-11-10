@@ -342,3 +342,34 @@ Inga backend-AK är overifierade. AK-1 till AK-12 hör till uppdrag B.
 - Jag har inte kört E2E-sviten eller frontend. Ändringen i `openapi.json` rör bara requesten, men
   uppdrag B bör kontrollera att klienten typar `status` själv.
 - `AGENTS.md` och `docs/teststrategi.md` säger fortfarande att endpoints är stubbar. De rättas separat.
+
+## 5. Min granskning
+
+Sammanställd med Claude utifrån mina beslut under kontrollpunkterna. Granskad och godkänd av Linus.
+
+### Hur jag granskade
+- Läste planen mot specen och prompten innan någon kod skrevs, och svarade på agentens oklarheter.
+- Lät testerna köras om oberoende av agenten vid varje kontrollpunkt i stället för att lita på
+  rapporten. Utfallet stämde varje gång.
+- Granskade diffen mot fillistan, specens Felfall och mönstret i den befintliga endpointen för att
+  skapa ärenden.
+- Lät Claude pröva toleransen för `createdAt` genom att tillfälligt ta bort den (se kontrollpunkt 3).
+
+### Accepterat, ändrat, avvisat
+- **Accepterat:** planen utan ändringar, status som sträng med en validator, `Results.Problem` för
+  `404`, två tester för AK-15 och att förstatusen `InProgress` sätts via `PUT`. Sabotage (a) bekräftade
+  att det andra AK-15-testet behövs: svarstestet var grönt utan sparning.
+- **Ändrat:** AK-13 jämförde hela svaret, inklusive `createdAt`. Jag valde 1 µs tolerans i stället för
+  1 ms, eftersom 1 µs motsvarar Postgres precision och är lätt att motivera.
+- **Avvisat:** inget.
+
+### Vad jag ifrågasatte
+- Om tidsstämpeln borde rättas där ärendet skapas i stället för i testet. Jag valde att inte ändra
+  kod utanför min del och lät toleransen vara.
+
+### Begränsningar som är kvar
+- `POST`-svarets `createdAt` har högre precision än det som sparas.
+- `GET /api/tickets/abc` ger `404` utan problem+json.
+- `openapi.json` listar inte tillåtna statusvärden i requesten. De står i `kontrakt.md`.
+- Ordningen mellan `400` och `404` är inte specad och inte testad.
+- Frontend och end-to-end är inte körda. De hör till uppdrag B.
