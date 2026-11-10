@@ -32,6 +32,7 @@ Never mock what the real stack can produce, such as a validation error or a miss
 - Sabotage-check critical tests (persistence, status changes, validation rules): temporarily disable the behaviour, confirm the test fails for the right reason, restore it.
 - Never weaken, skip or delete a test to make a run pass. Fix the cause or ask.
 - Keep each test small, self-explanatory and about one thing. Name it after the behaviour.
+- Parametrized tests (`[Theory]`, `it.each`) are fine for small, closely related cases of the same rule with the same expected result, such as several invalid values that give the same error. Keep different rules and results in separate tests.
 
 ### Backend
 
