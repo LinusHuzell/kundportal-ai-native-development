@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type PointerEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { ApiError, api } from '../../api/client'
+import SaveIcon from '../../components/SaveIcon'
 import {
   CATEGORY_LABELS,
   PRIORITY_LABELS,
@@ -39,9 +40,9 @@ const EMPTY_FORM: CreateTicketFormValues = {
 const SAVE_FAILED = 'Ärendet kunde inte sparas. Försök igen.'
 
 const inputClass =
-  'mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 ' +
-  'focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 ' +
-  'aria-invalid:border-red-700 aria-invalid:ring-red-700'
+  'mt-1 block w-full rounded-md border border-[#7E8B9A] bg-portal px-3 py-2 text-sm text-white ' +
+  'focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal ' +
+  'aria-invalid:border-[#FCA5A5] aria-invalid:ring-[#FCA5A5]'
 
 interface Props {
   /** Called when the drawer has closed, by Esc, "Stäng" or a successful save. */
@@ -140,15 +141,47 @@ export default function CreateTicketDrawer({ onClose, onSaved }: Props) {
     }
   }
 
+  const fieldIcon = (field: Field) => {
+    switch (field) {
+      case 'title':
+        return <path d="M4 6h16M4 12h10M4 18h16" />
+      case 'description':
+        return <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M8 13h8M8 17h8" /></>
+      case 'category':
+        return <path d="M20.6 13.4 11 3.8H4v7l9.6 9.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8ZM7.5 7.5h.01" />
+      case 'priority':
+        return <path d="M5 21V4m0 1h14l-3 5 3 5H5" />
+      case 'customerName':
+        return <><circle cx="12" cy="8" r="4" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></>
+      case 'customerEmail':
+        return <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>
+    }
+  }
+
   const label = (field: Field, text: string) => (
-    <label htmlFor={`${id}-${field}`} className="block text-sm font-medium text-slate-900">
+    <label
+      htmlFor={`${id}-${field}`}
+      className="flex items-center gap-2 text-sm font-medium text-copy-muted"
+    >
+      <svg
+        aria-hidden="true"
+        className="size-4 shrink-0 text-copy-dim"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+        viewBox="0 0 24 24"
+      >
+        {fieldIcon(field)}
+      </svg>
       {text}
     </label>
   )
 
   const errorText = (field: Field) =>
     errors[field] ? (
-      <p id={`${id}-${field}-error`} className="mt-1 text-sm text-red-700">
+      <p id={`${id}-${field}-error`} className="mt-1 text-sm text-[#FCA5A5]">
         {errors[field]}
       </p>
     ) : null
@@ -165,9 +198,9 @@ export default function CreateTicketDrawer({ onClose, onSaved }: Props) {
         if (pressedOnBackdrop.current && isOnBackdrop(event)) close()
         pressedOnBackdrop.current = false
       }}
-      className="my-0 mr-0 ml-auto h-full max-h-none w-full max-w-md overflow-y-auto bg-white p-0 text-slate-900 shadow-xl backdrop:bg-slate-900/40"
+      className="my-0 mr-0 ml-auto h-full max-h-none w-full max-w-md overflow-y-auto bg-panel p-0 text-white shadow-xl backdrop:bg-black/60"
     >
-      <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-line px-6 py-4">
         <h2 id={`${id}-heading`} className="text-lg font-semibold">
           Registrera ärende
         </h2>
@@ -175,7 +208,7 @@ export default function CreateTicketDrawer({ onClose, onSaved }: Props) {
           type="button"
           aria-label="Stäng"
           onClick={close}
-          className="rounded-md p-2 text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900"
+          className="rounded-md p-2 text-copy-muted hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-teal"
         >
           <svg
             aria-hidden="true"
@@ -194,7 +227,7 @@ export default function CreateTicketDrawer({ onClose, onSaved }: Props) {
       <form noValidate onSubmit={handleSubmit} className="space-y-5 px-6 py-5">
         <div
           role="alert"
-          className={formError ? 'rounded-md bg-red-50 px-3 py-2 text-sm text-red-800' : ''}
+          className={formError ? 'rounded-md bg-red-600/20 px-3 py-2 text-sm text-[#FCA5A5]' : ''}
         >
           {formError}
         </div>
@@ -252,8 +285,9 @@ export default function CreateTicketDrawer({ onClose, onSaved }: Props) {
 
         <button
           type="submit"
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
+          className="inline-flex items-center gap-2 rounded-md bg-teal px-4 py-2 text-sm font-semibold text-portal hover:bg-[#4CC5BA] focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 focus:ring-offset-panel"
         >
+          <SaveIcon className="size-4 shrink-0" />
           Spara ärende
         </button>
       </form>

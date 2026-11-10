@@ -52,11 +52,12 @@ const statusSelect = (page: Page) => main(page).getByRole('combobox', { name: 'S
 const saveButton = (page: Page) => main(page).getByRole('button', { name: 'Spara status' })
 
 async function openTicket(page: Page, ticket: Ticket) {
-  await page.goto(`/tickets/${ticket.id}`)
-  await expect(main(page).getByRole('heading', { level: 1, name: ticket.title })).toBeVisible()
+  await page.goto('/tickets')
+  await main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` }).click()
+  await expect(main(page).getByRole('heading', { level: 3, name: ticket.title })).toBeVisible()
 }
 
-test('AK-1: the title is the page heading and the other details have their labels', async ({
+test('AK-1: the selected ticket shows its title and labeled details', async ({
   page,
   request,
 }) => {
@@ -74,55 +75,158 @@ test('AK-1: the title is the page heading and the other details have their label
   await expect(detail(page, 'Beskrivning')).toHaveText(ticket.description)
 })
 
-test('AK-3: an id without a ticket shows Ärendet hittades inte', async ({ page }) => {
+test('AK-3: an unknown legacy ticket URL redirects to the list', async ({ page }) => {
   await page.goto('/tickets/2147483647')
 
-  await expect(
-    main(page).getByRole('heading', { level: 1, name: 'Ärendet hittades inte' }),
-  ).toBeVisible()
+  await expect(page).toHaveURL(/\/tickets$/)
+  await expect(main(page).getByRole('heading', { name: 'Ärenden', exact: true })).toBeVisible()
 })
 
-test('AK-3: an id that is not a number shows Ärendet hittades inte without calling the API', async ({
+const longCreatedAt = (createdAt: string) =>
+  new Intl.DateTimeFormat('sv-SE', {
+    dateStyle: 'long',
+    timeStyle: 'long',
+    timeZone: TIME_ZONE,
+  }).format(new Date(createdAt))
+
+test('AK-23: hovering the list date shows the full local timestamp and keeps the short date', async ({
   page,
+  request,
 }) => {
-  const requests = recordRequests(
-    page,
-    (method, url) => method === 'GET' && new URL(url).pathname.startsWith('/api/tickets/'),
+  const ticket = await createTicket(request)
+  await page.goto('/tickets')
+  const row = main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` })
+  const shortDate = new Intl.DateTimeFormat('sv-SE', {
+    dateStyle: 'medium',
+    timeZone: TIME_ZONE,
+  }).format(new Date(ticket.createdAt))
+  const date = row.getByText(shortDate, { exact: true })
+  const tooltip = row.getByRole('tooltip')
+
+  await expect(tooltip).toBeHidden()
+  await date.hover()
+
+  await expect(tooltip).toBeVisible()
+  await expect(tooltip).toHaveText(longCreatedAt(ticket.createdAt))
+  await expect(date).toBeVisible()
+  await tooltip.hover()
+  await expect(tooltip).toBeVisible()
+  await page.getByRole('heading', { name: 'Ärenden', exact: true }).hover()
+  await expect(tooltip).toBeHidden()
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await date.hover()
+  await expect(tooltip).toBeVisible()
+  const rowBounds = await row.boundingBox()
+  const tooltipBounds = await tooltip.boundingBox()
+  expect(rowBounds).not.toBeNull()
+  expect(tooltipBounds).not.toBeNull()
+  expect(tooltipBounds!.x).toBeGreaterThanOrEqual(rowBounds!.x)
+  expect(tooltipBounds!.x + tooltipBounds!.width).toBeLessThanOrEqual(
+    rowBounds!.x + rowBounds!.width,
   )
-
-  await page.goto('/tickets/abc')
-
-  await expect(
-    main(page).getByRole('heading', { level: 1, name: 'Ärendet hittades inte' }),
-  ).toBeVisible()
-  expect(requests).toHaveLength(0)
 })
 
-test('AK-6: Tillbaka till ärendelistan leads from a ticket to the ticket list', async ({
+test('AK-24: focusing the row shows and describes its full timestamp without another tab stop', async ({
+  page,
+  request,
+}) => {
+  const ticket = await createTicket(request)
+  await page.goto('/tickets')
+  const row = main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` })
+  await row.focus()
+
+  await expect(row.getByRole('tooltip')).toBeVisible()
+  await expect(row).toHaveAccessibleDescription(longCreatedAt(ticket.createdAt))
+  await page.keyboard.press('Tab')
+  await expect(row).not.toBeFocused()
+  await expect(row.getByRole('tooltip')).toBeHidden()
+})
+
+test('AK-25: Escape dismisses the timestamp without changing selection or focus', async ({
   page,
   request,
 }) => {
   const ticket = await createTicket(request)
   await openTicket(page, ticket)
+  const row = main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` })
+  await row.focus()
+  const tooltip = row.getByRole('tooltip')
+  await expect(tooltip).toBeVisible()
 
-  await main(page).getByRole('link', { name: 'Tillbaka till ärendelistan' }).click()
+  await page.keyboard.press('Escape')
 
-  await expect(page).toHaveURL(/\/tickets$/)
-  await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible()
+  await expect(tooltip).toBeHidden()
+  await expect(row).toBeFocused()
+  await expect(row).toHaveAttribute('aria-pressed', 'true')
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Shift+Tab')
+  await expect(row).toBeFocused()
+  await expect(tooltip).toBeVisible()
+
+  await page.keyboard.press('Tab')
+  await row.getByText(new Intl.DateTimeFormat('sv-SE', {
+    dateStyle: 'medium',
+    timeZone: TIME_ZONE,
+  }).format(new Date(ticket.createdAt)), { exact: true }).hover()
+  await expect(tooltip).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(tooltip).toBeHidden()
+  await expect(row).toHaveAttribute('aria-pressed', 'true')
 })
 
-test('AK-6: Tillbaka till ärendelistan leads from Ärendet hittades inte to the ticket list', async ({
+test('AK-3: an invalid legacy ticket URL redirects without a ticket API request', async ({
+  page,
+}) => {
+  const requests = recordRequests(
+    page,
+    (method, url) =>
+      method === 'GET' && /^\/api\/tickets\/\d+$/.test(new URL(url).pathname),
+  )
+
+  await page.goto('/tickets/abc')
+
+  await expect(page).toHaveURL(/\/tickets$/)
+  await expect(main(page).getByRole('heading', { name: 'Ärenden', exact: true })).toBeVisible()
+  expect(requests).toHaveLength(0)
+})
+
+test('AK-6: a legacy ticket URL selects the matching ticket on the list', async ({
+  page,
+  request,
+}) => {
+  const ticket = await createTicket(request)
+  await page.goto(`/tickets/${ticket.id}`)
+
+  await expect(page).toHaveURL(/\/tickets$/)
+  await expect(main(page).getByRole('heading', { level: 3, name: ticket.title })).toBeVisible()
+})
+
+test('AK-6: an invalid legacy ticket URL leads to the list', async ({
   page,
 }) => {
   await page.goto('/tickets/abc')
-  await expect(
-    main(page).getByRole('heading', { level: 1, name: 'Ärendet hittades inte' }),
-  ).toBeVisible()
-
-  await main(page).getByRole('link', { name: 'Tillbaka till ärendelistan' }).click()
 
   await expect(page).toHaveURL(/\/tickets$/)
-  await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible()
+  await expect(main(page).getByRole('heading', { name: 'Ärenden', exact: true })).toBeVisible()
+})
+
+test('AK-6: selecting another ticket updates the panel without leaving the homepage', async ({
+  page,
+  request,
+}) => {
+  const firstTicket = await createTicket(request)
+  const secondTicket = await createTicket(request)
+  await openTicket(page, firstTicket)
+
+  await main(page)
+    .getByRole('button', { name: `${secondTicket.ticketNumber}: ${secondTicket.title}` })
+    .click()
+
+  await expect(page).toHaveURL(/\/tickets$/)
+  await expect(
+    main(page).getByRole('heading', { level: 3, name: secondTicket.title }),
+  ).toBeVisible()
 })
 
 test('AK-7: a new ticket has Nytt selected, all four statuses and Nytt cannot be chosen', async ({
@@ -167,6 +271,9 @@ test('AK-8: saving a new status updates the details, announces it and keeps focu
     'Status ändrad till Väntar på kund',
   )
   await expect(detail(page, 'Status')).toHaveText('Väntar på kund')
+  await expect(
+    main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` }),
+  ).toContainText('Väntar på kund')
   await expect(saveButton(page)).toBeFocused()
 })
 
@@ -179,6 +286,7 @@ test('AK-9: the new status is still shown after a reload', async ({ page, reques
   expect((await response).status()).toBe(200)
 
   await page.reload()
+  await main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` }).click()
 
   await expect(detail(page, 'Status')).toHaveText('Avslutat')
   await expect(statusSelect(page)).toHaveValue('Closed')

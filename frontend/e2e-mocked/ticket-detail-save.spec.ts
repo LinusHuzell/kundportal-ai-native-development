@@ -3,8 +3,7 @@ import type { ProblemDetails } from '../src/api/client.ts'
 import type { Ticket } from '../src/types/ticket.ts'
 
 // AK-11 and AK-12: a slow response, a server error and a network failure cannot be produced on
-// demand by the real stack, so the ticket API is mocked here. The mocked suite has no backend,
-// so GET /api/tickets/42 is mocked as well.
+// demand by the real stack, so the ticket API is mocked here.
 
 const ticket: Ticket = {
   id: 42,
@@ -22,14 +21,21 @@ const ticket: Ticket = {
 const SAVE_FAILED = 'Statusen kunde inte sparas. Försök igen.'
 
 async function mockTicketApi(page: Page, handleStatusUpdate: (route: Route) => Promise<void>) {
-  await page.route(`**/api/tickets/${ticket.id}`, (route) =>
+  await page.route('**/api/tickets', (route) =>
     route.request().method() === 'GET'
       ? route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(ticket),
+          body: JSON.stringify([ticket]),
         })
       : route.fallback(),
+  )
+  await page.route(`**/api/tickets/${ticket.id}`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(ticket),
+    }),
   )
   await page.route(`**/api/tickets/${ticket.id}/history`, (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) }),
@@ -43,8 +49,9 @@ const main = (page: Page) => page.getByRole('main')
 const statusSelect = (page: Page) => main(page).getByRole('combobox', { name: 'Status' })
 
 async function openTicketAndChoose(page: Page, label: string) {
-  await page.goto(`/tickets/${ticket.id}`)
-  await expect(main(page).getByRole('heading', { level: 1, name: ticket.title })).toBeVisible()
+  await page.goto('/tickets')
+  await main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` }).click()
+  await expect(main(page).getByRole('heading', { level: 3, name: ticket.title })).toBeVisible()
   await statusSelect(page).selectOption({ label })
 }
 

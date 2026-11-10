@@ -12,6 +12,14 @@
 - Tydlig informationshierarki
 - Anpassad för kontorspersonal som hanterar serviceärenden
 
+## Ikonografi
+
+- Ikoner skrivs som dekorativa inline-SVG:er i komponenterna. Tailwind används för storlek, färg och placering, inte som ikonkälla.
+- Ikonerna har inga externa ikonpaket eller andra beroenden.
+- Använd samma visuella symbol för samma fält i olika vyer, till exempel hash för ärendenummer, dokument för beskrivning, etikett för kategori, flagga för prioritet, person för namn och kuvert för e-post.
+- I ärendelistan visar statusikonen det aktuella värdet: Nytt har ett plus, Pågående en klocka, Väntar på kund en pratbubbla och Avslutat en bock i cirkel. I detaljpanelen är ikonen för fältet Status generell och densamma för alla värden. Visa alltid statusens textetikett tillsammans med ikonen.
+- Ikoner som bara förstärker en synlig textetikett ska döljas för hjälpmedel (`aria-hidden="true"`). Textetiketten är fortsatt fältets tillgängliga namn.
+
 ---
 
 # Färgpalett
@@ -89,8 +97,14 @@ Turkos.
 ### Nedtonad text
 
 ```text
-#7E8B9A
+#B8C4D2
 ```
+
+## Kontrast
+
+- All vanlig text ska ha minst 4,5:1 i kontrast mot sin bakgrund; stor text minst 3:1.
+- Textfärger ska väljas efter den faktiska bakgrunden. Den nedtonade textfärgen får inte användas där den inte når kontrastkravet.
+- Ljus text används på de mörkblå ytorna. Text i formulärkontroller ska ha tillräcklig kontrast mot kontrollens bakgrund.
 
 ---
 

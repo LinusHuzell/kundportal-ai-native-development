@@ -1,13 +1,32 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { api } from '../api/client'
-import type { Ticket, TicketPriority, TicketStatus } from '../types/ticket'
+import TicketDetailsPanel from '../components/TicketDetailsPanel'
+import TicketStatusIcon from '../components/TicketStatusIcon'
+import TicketHistory from '../features/ticket-detail/TicketHistory'
+import StatusForm from '../features/ticket-detail/StatusForm'
+import {
+  PRIORITY_LABELS,
+  STATUS_LABELS,
+  type Ticket,
+  type TicketPriority,
+  type TicketStatus,
+} from '../types/ticket'
 
 type TicketListState =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'loaded'; tickets: Ticket[] }
 
-const createdDateFormatter = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' })
+type SelectedTicketResult = { id: number } & (
+  { status: 'loaded'; ticket: Ticket } | { status: 'failed' }
+)
+
+const createdDateFormatter = new Intl.DateTimeFormat('sv-SE', { dateStyle: 'medium' })
+const createdTimestampFormatter = new Intl.DateTimeFormat('sv-SE', {
+  dateStyle: 'long',
+  timeStyle: 'long',
+})
 const statusClassNames: Record<TicketStatus, string> = {
   New: 'bg-blue-500/15 text-blue-300',
   InProgress: 'bg-amber-500/15 text-amber-300',
@@ -17,12 +36,34 @@ const statusClassNames: Record<TicketStatus, string> = {
 const priorityClassNames: Record<TicketPriority, string> = {
   Low: 'bg-slate-500/15 text-copy-muted',
   Medium: 'bg-amber-500/15 text-amber-300',
-  High: 'bg-red-600/15 text-red-400',
+  High: 'bg-red-600/15 text-red-300',
 }
 
 export default function TicketListPage() {
+  const location = useLocation()
+  const requestedTicketId = (location.state as { selectedTicketId?: unknown } | null)
+    ?.selectedTicketId
   const [state, setState] = useState<TicketListState>({ status: 'loading' })
-  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null)
+  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(() =>
+    typeof requestedTicketId === 'number' && Number.isSafeInteger(requestedTicketId)
+      ? requestedTicketId
+      : null,
+  )
+  const [selectedTicketResult, setSelectedTicketResult] = useState<SelectedTicketResult>()
+  const [hoveredDateId, setHoveredDateId] = useState<number | null>(null)
+  const [focusedRowId, setFocusedRowId] = useState<number | null>(null)
+  const [dismissedTimestampId, setDismissedTimestampId] = useState<number | null>(null)
+  const activeTimestampId = hoveredDateId ?? focusedRowId
+
+  useEffect(() => {
+    if (activeTimestampId === null) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDismissedTimestampId(activeTimestampId)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [activeTimestampId])
 
   useEffect(() => {
     let active = true
@@ -32,7 +73,11 @@ export default function TicketListPage() {
       .then((tickets) => {
         if (active) {
           setState({ status: 'loaded', tickets })
-          setSelectedTicketId(tickets[0]?.id ?? null)
+          setSelectedTicketId((current) =>
+            current !== null && tickets.some((ticket) => ticket.id === current)
+              ? current
+              : (tickets[0]?.id ?? null),
+          )
         }
       })
       .catch(() => {
@@ -44,62 +89,132 @@ export default function TicketListPage() {
     }
   }, [])
 
-  const selectedTicket = state.status === 'loaded'
-    ? state.tickets.find((ticket) => ticket.id === selectedTicketId) ?? null
-    : null
+  useEffect(() => {
+    if (selectedTicketId === null) return
+    let active = true
+
+    api.getTicket(selectedTicketId).then(
+      (ticket) => {
+        if (active) setSelectedTicketResult({ id: selectedTicketId, status: 'loaded', ticket })
+      },
+      () => {
+        if (active) setSelectedTicketResult({ id: selectedTicketId, status: 'failed' })
+      },
+    )
+
+    return () => {
+      active = false
+    }
+  }, [selectedTicketId])
+
+  const currentTicketResult = selectedTicketResult?.id === selectedTicketId
+    ? selectedTicketResult
+    : selectedTicketId === null
+      ? undefined
+      : { id: selectedTicketId, status: 'loading' as const }
+  const selectedTicket = currentTicketResult?.status === 'loaded' ? currentTicketResult.ticket : null
+
+  const handleStatusSaved = (updatedTicket: Ticket) => {
+    setSelectedTicketResult({ id: updatedTicket.id, status: 'loaded', ticket: updatedTicket })
+    setState((current) =>
+      current.status === 'loaded'
+        ? {
+            ...current,
+            tickets: current.tickets.map((ticket) =>
+              ticket.id === updatedTicket.id ? updatedTicket : ticket,
+            ),
+          }
+        : current,
+    )
+  }
 
   return (
     <div>
-      <h1 className="mb-5 text-2xl font-bold text-white" id="ticket-list-title">Tickets</h1>
+      <h1 className="mb-5 text-2xl font-bold text-white" id="ticket-list-title">Ärenden</h1>
       <div className="grid items-start gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <section
           className="min-w-0 overflow-hidden rounded-[7px] border border-line bg-portal/80"
           aria-labelledby="ticket-queue-title"
         >
           <h2 className="border-b border-line px-5 py-[18px] text-base font-semibold text-white" id="ticket-queue-title">
-            All tickets
+            Alla ärenden{state.status === 'loaded' ? ` (${state.tickets.length})` : ''}
           </h2>
 
           {state.status === 'loading' && (
             <p className="m-0 px-5 py-7 text-[13px] text-copy-muted" role="status">
-              Loading tickets...
+              Laddar ärenden…
             </p>
           )}
           {state.status === 'error' && (
             <p className="m-0 px-5 py-7 text-[13px] text-red-300" role="alert">
-              Tickets could not be loaded. Please try again.
+              Kunde inte hämta ärenden. Försök igen.
             </p>
           )}
           {state.status === 'loaded' && state.tickets.length === 0 && (
-            <p className="m-0 px-5 py-7 text-[13px] text-copy-muted">No tickets found.</p>
+            <p className="m-0 px-5 py-7 text-[13px] text-copy-muted">Inga ärenden hittades.</p>
           )}
           {state.status === 'loaded' && state.tickets.length > 0 && (
             <div
               className="max-h-[72vh] space-y-2 overflow-y-auto p-2 [scrollbar-color:#40546a_transparent] [scrollbar-width:thin] max-md:max-h-[52vh]"
-              aria-label="Tickets"
+              aria-label="Ärenden"
             >
               {state.tickets.map((ticket) => {
                 const isSelected = ticket.id === selectedTicketId
+                const timestampId = `ticket-created-at-${ticket.id}`
+                const isTimestampVisible = activeTimestampId === ticket.id
+                  && dismissedTimestampId !== ticket.id
 
                 return (
                   <button
                     type="button"
-                    className={`block w-full rounded-md border p-[14px] text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal ${
+                    className={`relative block w-full rounded-md border p-[14px] text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal ${
                       isSelected
                         ? 'border-teal bg-[#1b3048] shadow-[inset_3px_0_0_#2fb1a5]'
                         : 'border-white/10 bg-gradient-to-r from-panel to-[#14253a] hover:border-white/25'
                     }`}
                     key={ticket.id}
                     aria-label={`${ticket.ticketNumber}: ${ticket.title}`}
+                    aria-describedby={timestampId}
                     aria-pressed={isSelected}
+                    onFocus={() => {
+                      setFocusedRowId(ticket.id)
+                      setDismissedTimestampId(null)
+                    }}
+                    onBlur={() => setFocusedRowId(null)}
                     onClick={() => setSelectedTicketId(ticket.id)}
                   >
                     <span className="flex items-center justify-between gap-2.5">
-                      <span className="text-[10px] font-bold text-teal">{ticket.ticketNumber}</span>
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-teal">
+                        <svg
+                          aria-hidden="true"
+                          className="size-3 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.7"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M4 9h16M4 15h16M10 3 8 21m8-18-2 18" />
+                        </svg>
+                        {ticket.ticketNumber}
+                      </span>
                       <span
-                        className={`inline-flex min-h-[22px] items-center whitespace-nowrap rounded px-2 text-[10px] font-semibold ${priorityClassNames[ticket.priority]}`}
+                        className={`inline-flex min-h-[22px] items-center gap-1.5 whitespace-nowrap rounded px-2 text-[10px] font-semibold ${priorityClassNames[ticket.priority]}`}
                       >
-                        {ticket.priority}
+                        <svg
+                          aria-hidden="true"
+                          className="size-3.5 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.7"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M5 21V4m0 1h14l-3 5 3 5H5" />
+                        </svg>
+                        {PRIORITY_LABELS[ticket.priority]}
                       </span>
                     </span>
                     <span className="mt-2.5 block text-[13px] font-semibold leading-[1.45] text-white">
@@ -109,11 +224,40 @@ export default function TicketListPage() {
                       <span
                         className={`inline-flex min-h-[22px] items-center gap-1.5 whitespace-nowrap rounded px-2 text-[10px] font-semibold ${statusClassNames[ticket.status]}`}
                       >
-                        <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
-                        {ticket.status}
+                        <TicketStatusIcon status={ticket.status} className="size-3.5 shrink-0" />
+                        {STATUS_LABELS[ticket.status]}
                       </span>
-                      <time className="whitespace-nowrap text-[10px] text-copy-dim" dateTime={ticket.createdAt}>
-                        {createdDateFormatter.format(new Date(ticket.createdAt))}
+                      <time
+                        className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] text-copy-dim"
+                        dateTime={ticket.createdAt}
+                        onMouseEnter={() => {
+                          setHoveredDateId(ticket.id)
+                          setDismissedTimestampId(null)
+                        }}
+                        onMouseLeave={() => setHoveredDateId(null)}
+                      >
+                        <svg
+                          aria-hidden="true"
+                          className="size-3.5 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.7"
+                          viewBox="0 0 24 24"
+                        >
+                          <rect x="3" y="5" width="18" height="16" rx="2" />
+                          <path d="M16 3v4M8 3v4M3 11h18" />
+                        </svg>
+                        <span>{createdDateFormatter.format(new Date(ticket.createdAt))}</span>
+                        <span
+                          id={timestampId}
+                          role="tooltip"
+                          hidden={!isTimestampVisible}
+                          className="absolute right-3 bottom-10 z-10 w-[calc(100%-1.5rem)] max-w-64 whitespace-normal rounded border border-line bg-portal px-3 py-2 text-xs leading-relaxed text-white shadow-lg"
+                        >
+                          {createdTimestampFormatter.format(new Date(ticket.createdAt))}
+                        </span>
                       </time>
                     </span>
                   </button>
@@ -127,71 +271,33 @@ export default function TicketListPage() {
           className="min-w-0 overflow-hidden rounded-[7px] border border-line bg-portal/80"
           aria-labelledby="ticket-details-title"
         >
-          <div className="border-b border-line px-5 py-[18px]">
-            <p className="mb-1 text-[10px] font-bold tracking-[0.12em] text-teal">SELECTED TICKET</p>
-            <h2 className="text-base font-semibold text-white" id="ticket-details-title">Ticket details</h2>
-          </div>
-
-          {selectedTicket ? (
-            <div className="divide-y divide-line">
-              <section className="p-5" aria-label="Ticket description">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-copy-dim">
-                  {selectedTicket.ticketNumber}
-                </p>
-                <h3 className="text-lg font-semibold leading-snug text-white">{selectedTicket.title}</h3>
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-copy-muted">
-                  {selectedTicket.description}
-                </p>
-              </section>
-
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-5 p-5 text-sm">
-                <div>
-                  <dt className="text-xs text-copy-dim">Category</dt>
-                  <dd className="mt-1 font-medium text-white">{selectedTicket.category}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-copy-dim">Priority</dt>
-                  <dd className="mt-1 font-medium text-white">{selectedTicket.priority}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-copy-dim">Status</dt>
-                  <dd className="mt-1 font-medium text-white">{selectedTicket.status}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-copy-dim">Created</dt>
-                  <dd className="mt-1 font-medium text-white">
-                    {createdDateFormatter.format(new Date(selectedTicket.createdAt))}
-                  </dd>
-                </div>
-              </dl>
-
-              <section className="p-5" aria-label="Customer information">
-                <h3 className="mb-3 text-sm font-semibold text-white">Customer</h3>
-                <dl className="grid gap-3 text-sm">
-                  <div>
-                    <dt className="text-xs text-copy-dim">Name</dt>
-                    <dd className="mt-1 break-words text-copy-muted">
-                      {selectedTicket.customerName || 'Not provided'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-copy-dim">Email</dt>
-                    <dd className="mt-1 break-all text-copy-muted">
-                      {selectedTicket.customerEmail || 'Not provided'}
-                    </dd>
-                  </div>
-                </dl>
-              </section>
-            </div>
-          ) : (
-            <p className="px-5 py-7 text-[13px] text-copy-muted" role="status">
-              {state.status === 'loading'
-                ? 'Loading ticket details...'
-                : state.status === 'error'
-                  ? 'Ticket details are unavailable.'
-                  : 'No ticket selected.'}
-            </p>
-          )}
+          <TicketDetailsPanel
+            ticket={selectedTicket}
+            emptyMessageRole={currentTicketResult?.status === 'failed' ? 'alert' : 'status'}
+            emptyMessage={
+              currentTicketResult?.status === 'loading' || state.status === 'loading'
+                ? 'Laddar ärendedetaljer…'
+                : currentTicketResult?.status === 'failed' || state.status === 'error'
+                  ? 'Ärendedetaljerna är inte tillgängliga.'
+                  : 'Inget ärende valt.'
+            }
+          >
+            {selectedTicket && (
+              <>
+                <section aria-labelledby="ticket-status-title">
+                  <h2 id="ticket-status-title" className="text-sm font-semibold text-white">
+                    Ändra status
+                  </h2>
+                  <StatusForm
+                    key={selectedTicket.id}
+                    ticket={selectedTicket}
+                    onSaved={handleStatusSaved}
+                  />
+                </section>
+                <TicketHistory ticketId={selectedTicket.id} />
+              </>
+            )}
+          </TicketDetailsPanel>
         </aside>
       </div>
     </div>

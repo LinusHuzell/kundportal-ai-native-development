@@ -5,13 +5,13 @@ Senast uppdaterad: 2026-11-10
 
 ## Sammanfattning
 
-En handläggare ska på ett ärendes detaljsida kunna se vad som har hänt med ärendet och när. Den här specen loggar bara att ärendet registrerades. Statusändring och redigering hör till en kommande spec. Historiken är en enkel, skrivskyddad händelselogg.
+En handläggare ska i startsidans valda ärendepanel kunna se vad som har hänt med ärendet och när. Den här specen loggar bara att ärendet registrerades. Statusändring och redigering hör till en kommande spec. Historiken är en enkel, skrivskyddad händelselogg.
 
 Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
 
 ## Mål
 
-- Handläggaren kan se att och när ett ärende registrerades, på detaljsidan.
+- Handläggaren kan se att och när ett ärende registrerades, i den valda ärendepanelen på startsidan.
 - Historiken finns kvar efter omstart av applikationen.
 - Modellen kan utökas med fler händelsetyper utan att befintlig data eller API ändras.
 
@@ -20,7 +20,7 @@ Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
 - En händelsetyp: ärendet registrerades (`Created`).
 - Backend skapar händelsen automatiskt när ett ärende registreras.
 - Endpoint som returnerar ett ärendes historik, som en lista.
-- Frontend: lista med händelser på ärendets detaljsida.
+- Frontend: lista med händelser i den valda ärendepanelen på startsidan.
 - Beständig lagring av händelserna (ny tabell, ny migration).
 - Databasen tar bort historiken när ett ärende tas bort. Det finns ännu inget API för att radera ärenden.
 
@@ -38,7 +38,7 @@ Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
 
 - **Användare/roll:** Handläggare.
 - **Förutsättningar:** Ärendet finns.
-- **Beroenden:** [Registrera ärende](registrera-ärende.md) och en detaljsida för ärenden.
+- **Beroenden:** [Registrera ärende](registrera-ärende.md) och ärendelistan på startsidan.
 
 ## Begrepp och tillåtna värden
 
@@ -96,17 +96,17 @@ Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
 - When: `GET /api/tickets/{id}/history` anropas
 - Then: Svaret är `200` med en tom lista `[]`
 
-### Detaljsida (frontend)
+### Startsida (frontend)
 
 **AK-6: Historik visas**
-- Given: Handläggaren öppnar ett ärendes detaljsida
-- When: Sidan har laddats
+- Given: Handläggaren väljer ett ärende på startsidan
+- When: Ärendepanelen har laddats
 - Then: Historiken visas som en lista med tidpunkt och beskrivningen "Ärendet registrerades"
 
 **AK-7: Historiken kunde inte hämtas**
-- Given: Handläggaren öppnar detaljsidan
+- Given: Handläggaren har valt ett ärende på startsidan
 - When: Servern svarar med ett serverfel (5xx) eller inte går att nå
-- Then: Meddelandet "Historiken kunde inte hämtas. Försök igen." visas i stället för listan, och resten av detaljsidan fungerar
+- Then: Meddelandet "Historiken kunde inte hämtas. Försök igen." visas i stället för listan, och resten av panelen fungerar
 
 ### Radering
 
@@ -166,7 +166,7 @@ Följ projektets [teststrategi](../teststrategi.md).
 | AK-3 | Historik hämtas för ett registrerat ärende | Integration | Automatisk |
 | AK-4 | `404` `problem+json` för okänt ärende | Integration | Automatisk |
 | AK-5 | Läs tillbaka via ny `DbContext` (`Fixture.CreateDbContext()`) | Integration | Automatisk |
-| AK-6 | Händelsen visas på detaljsidan | Frontend unit och E2E | Automatisk |
+| AK-6 | Händelsen visas i startsidans valda ärendepanel | Frontend E2E | Automatisk |
 | AK-7 | Serverfel och nätverksfel vid hämtning (kan inte skapas av riktiga stacken på begäran) | E2E med mockat API | Automatisk |
 | AK-8 | Ta bort ärendet via `DbContext` och läs tillbaka händelsen via en ny `Fixture.CreateDbContext()` | Integration | Automatisk |
 | AK-9 | Historik hämtas för ett ärende utan händelser | Integration | Automatisk |
