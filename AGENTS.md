@@ -47,7 +47,6 @@ Never mock what the real stack can produce, such as a validation error or a miss
 - Never mock in `frontend/e2e/` (`page.route`, `context.route`, `routeFromHAR`).
 - End-to-end tests create their own data through the API with unique values and assert only on it. Never rely on seed data or other tests' data.
 - Type mocked responses with the client's types, shape them after `docs/api/openapi.json`, and mock errors as problem+json.
-- `frontend/e2e-mocked/ticket-list.spec.ts` is a placeholder. Delete it when adding the first real error-state test.
 
 ### Docker Compose
 
