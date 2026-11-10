@@ -333,3 +333,85 @@ faller på påståenden, alla befintliga gröna, typecheck och lint rena.
 Begränsning: end-to-end-testerna faller på första steget (rubriken), eftersom sidan är en
 platshållare. Att AK-kontrollerna själva kan falla visas bara för AK-10 och AK-11 genom
 sabotagekontrollerna. Skapad i AK-1 jämförs med `formatCreatedAt`, vars format låses av AK-2.
+
+### Kontrollpunkt 3: grönt och sabotage (2026-11-10)
+Körde allt själv: lint, typecheck, 58 enhetstester, build, 9 mockade och 29 end-to-end-tester
+gröna. Granskade diffen. Sabotagekontrollerna föll av rätt anledning.
+
+Två beslut under steget:
+- Mitt svar om `aria-labelledby` på `<dd>` var fel. ARIA 1.3 tillåter inget namn på rollen
+  `definition`, så testerna hittade inga värden. Testerna hittar nu termen via roll och text och tar
+  värdet med `+ dd`. Felet syntes inte vid kontrollpunkt 2, eftersom testerna föll redan på
+  rubriken, alltså den begränsning som noterades där.
+- Lint varnade för `setState` i en effekt. I stället för ett undantag härleds laddningsläget från
+  hämtningens resultat. "Laddar ärende…" finns då från första renderingen, och uppläsningen
+  kontrolleras manuellt.
+
+## 4. Resultat
+
+Skrivet av agenten vid kontrollpunkt 3. Inget är committat.
+
+### Ändrade filer
+
+- `frontend/src/types/ticket.ts`: `STATUS_LABELS`.
+- `frontend/src/api/client.ts`: `getTicket` och `updateTicketStatus` via `request`, och dokumentkommentaren.
+- `frontend/src/features/ticket-detail/formatCreatedAt.ts`, `parseTicketId.ts` och `StatusForm.tsx` (ny).
+- `frontend/src/pages/TicketDetailPage.tsx`.
+- `frontend/e2e/ticket-detail.spec.ts` och `frontend/e2e-mocked/ticket-detail-save.spec.ts`: bara
+  hur värdena i `<dl>` hittas (se nedan). Alla AK-påståenden är oförändrade.
+- Testfilerna från kontrollpunkt 2 (`*.test.ts`, `e2e-mocked/ticket-detail-load.spec.ts`) är oförändrade.
+
+### Avvikelser från planen
+
+- **`<dd>` har ingen `aria-labelledby`.** Playwright (och ARIA 1.3) tillåter inget namn på rollen
+  `definition`, så `getByRole('definition', { name })` hittade inget. Enligt Linus beslut hittar testerna
+  termen via roll och text och tar värdet med `locator('+ dd')`.
+- **Laddningsregionen följer inte längre beslut 13.** Enligt Linus beslut sparas bara resultatet av
+  hämtningen (id plus ärende, "hittades inte" eller fel), och state sätts bara i promise-callbackarna.
+  Inget resultat för aktuellt id betyder laddning, så "Laddar ärende…" står i regionen redan vid första
+  renderingen. Ingen lint-undantagskommentar behövs. Om VoiceOver läser upp texten (AK-4) kontrolleras
+  manuellt. Felregionen och formulärets regioner finns fortfarande innan de får text.
+- `parseTicketId`-stubben i steg 1 returnerade `0` i stället för `undefined`, så att även de ogiltiga
+  fallen föll röda.
+
+### Kommandon och verklig utskrift
+
+| Kommando | Utfall |
+|---|---|
+| `npm run lint` | Ingen utskrift efter `oxlint`, alltså inga varningar eller fel |
+| `npm run typecheck` | Inga fel |
+| `npm test` | `Test Files 5 passed (5)`, `Tests 58 passed (58)` |
+| `npm run build` | `✓ built in 117ms` |
+| `npm run test:e2e:mocked` | `9 passed (2.8s)` |
+| `docker compose -f compose.test.yaml run --build --rm e2e` | `29 passed (3.3s)`, exit 0. Sedan `down` |
+
+Första körningen med `getByRole('definition', { name })` gav 3 fel i hela stacken (AK-1, AK-8, AK-9) och
+2 i den mockade sviten (AK-12 ×2), alla "element(s) not found" på den lokatorn. Därav ändringen ovan.
+
+### Sabotagekontroll
+
+| Sabotage | Svit | Utfall |
+|---|---|---|
+| (a) Kontrollen av "Nytt" före sparning bortkopplad (`if (false)`) | Hela stacken | `1 failed`, `28 passed`. AK-10 föll på `toHaveAttribute('aria-invalid', 'true')`, `Received: ""`: inget fel visades, och formuläret skickade `PUT` med `New` |
+| (b) Spärren `if (savingRef.current) return` borttagen | Mockad | `1 failed`, `8 passed`. AK-11 föll på `expect(await secondRequestSent).toBe(false)`, `Received: true`: Enter på knappen "Sparar…" skickade ett andra `PUT` |
+
+Koden återställdes efter varje sabotage (filen jämförd med en kopia), och slutkörningen ovan är grön.
+
+### AK
+
+- Täckta automatiskt: AK-1, AK-3, AK-6, AK-7, AK-8, AK-9, AK-10 (hela stacken), AK-2 (Vitest),
+  AK-4, AK-5, AK-11, AK-12 (mockat API). AK-6 i laddnings- och feltillståndet kontrolleras som att
+  länken syns i testerna för AK-4 och AK-5. Klicket testas mot hela stacken.
+- Inte verifierat: uppläsning och fokus med tangentbord och VoiceOver i AK-4, AK-5, AK-8, AK-10 och
+  AK-12 (Linus manuella kontroll), och synliga fokusringar och stilen för `aria-disabled` (visuellt).
+- AK-13 till AK-19 är backend (uppdrag A).
+
+### Osäkerheter
+
+- Byte mellan två ärenden utan omladdning (till exempel `/tickets/1` till `/tickets/2`) visar laddning
+  och ignorerar sena svar för det gamla id:t, men det testas inte. Specen har inget AK för det.
+- `+ dd` är en CSS-syskonväljare på elementnamn, inte en klass, men testerna är inte helt rollbaserade.
+- AK-1 jämför Skapad med `formatCreatedAt` körd i Node mot Chromium. Det gick igenom, men ICU-data kan
+  skilja mellan versioner.
+- Att spara samma status igen testas inte, enligt beslut.
+- Kommentaren i `e2e/smoke.spec.ts` om att detaljsidan "loads nothing" är inaktuell. Linus tar den separat.
