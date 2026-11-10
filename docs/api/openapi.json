@@ -392,6 +392,7 @@
       "TicketResponse": {
         "required": [
           "id",
+          "ticketNumber",
           "title",
           "description",
           "category",
@@ -410,6 +411,9 @@
               "string"
             ],
             "format": "int32"
+          },
+          "ticketNumber": {
+            "type": "string"
           },
           "title": {
             "type": "string"

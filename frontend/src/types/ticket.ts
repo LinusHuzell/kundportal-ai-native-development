@@ -17,6 +17,7 @@ export type TicketCategory = (typeof TICKET_CATEGORIES)[number]
 
 export interface Ticket {
   id: number
+  ticketNumber: string
   title: string
   description: string
   category: TicketCategory
@@ -27,7 +28,7 @@ export interface Ticket {
   createdAt: string // ISO 8601
 }
 
-export type CreateTicketInput = Omit<Ticket, 'id' | 'status' | 'createdAt'>
+export type CreateTicketInput = Omit<Ticket, 'id' | 'ticketNumber' | 'status' | 'createdAt'>
 export type UpdateTicketInput = Partial<CreateTicketInput>
 
 // Swedish display labels, from docs/avgränsningar.md.

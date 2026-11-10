@@ -19,6 +19,7 @@ Maskinläsbar specifikation: [openapi.json](openapi.json), genererad från backe
 ```json
 {
   "id": 1,
+  "ticketNumber": "SR-2026-1001",
   "title": "Paketet har inte kommit",
   "description": "Beställde för två veckor sedan.",
   "category": "OrdersDeliveries",
@@ -98,8 +99,9 @@ Regler och felmeddelanden för `POST /tickets` kommer från tabellen Felfall i
 - `status` måste vara ett giltigt enum-värde (`PUT /tickets/{id}/status`).
 - Fel JSON-typ (t.ex. `"title": 123`) eller trasig JSON ger `400` från ramverket, utan `errors`.
 
-Vid sparning sätts `status` till `New` och `createdAt` till serverns tid i UTC. Ärendet får också
-ett internt ärendenummer, `SR-<år>-<1000 + id>`, som inte finns i API:t.
+Vid sparning sätts `status` till `New` och `createdAt` till serverns tid i UTC. Backend genererar också
+ärendenumret `ticketNumber` i formatet `SR-<år>-<1000 + id>`, där `<år>` är året i `createdAt` (UTC),
+t.ex. `SR-2026-1001` för id 1. Fältet skickas i alla svar med `Ticket` men tas inte emot i anrop.
 
 ## Felformat
 

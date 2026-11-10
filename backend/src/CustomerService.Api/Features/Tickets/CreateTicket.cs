@@ -104,6 +104,7 @@ public static class CreateTicket
 
         return Results.Created($"/api/tickets/{ticket.Id}", new TicketResponse(
             ticket.Id,
+            ticket.TicketNumber,
             ticket.Title,
             ticket.Description,
             ticket.Category,

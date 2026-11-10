@@ -11,7 +11,7 @@ const input: CreateTicketInput = {
   customerEmail: 'anna@example.com',
 }
 
-const ticket: Ticket = { ...input, id: 1, status: 'New', createdAt: '2026-11-09T09:30:00Z' }
+const ticket: Ticket = { ...input, id: 1, ticketNumber: 'SR-2026-1001', status: 'New', createdAt: '2026-11-09T09:30:00Z' }
 
 const respond = (status: number, body: unknown, contentType = 'application/json') =>
   vi
