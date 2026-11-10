@@ -11,5 +11,7 @@ public class Ticket
     public TicketCategory Category { get; set; }
     public TicketPriority Priority { get; set; }
     public TicketStatus Status { get; set; }
+    public required string CustomerName { get; set; }
+    public required string CustomerEmail { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }

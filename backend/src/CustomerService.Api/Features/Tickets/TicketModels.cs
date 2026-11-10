@@ -8,6 +8,7 @@ public enum TicketCategory { OrdersDeliveries, Invoices, ReturnsComplaints, Othe
 
 public record TicketResponse(
     int Id,
+    string TicketNumber,
     string Title,
     string Description,
     TicketCategory Category,

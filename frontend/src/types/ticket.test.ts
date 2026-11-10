@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { TICKET_CATEGORIES, TICKET_PRIORITIES, TICKET_STATUSES } from './ticket'
+import {
+  CATEGORY_LABELS,
+  PRIORITY_LABELS,
+  TICKET_CATEGORIES,
+  TICKET_PRIORITIES,
+  TICKET_STATUSES,
+} from './ticket'
 
 // Guards the domain values against accidental drift from docs/avgränsningar.md.
 // Replace or extend with validation tests once the form logic exists.
@@ -19,5 +25,21 @@ describe('ticket domain values', () => {
       'ReturnsComplaints',
       'Other',
     ])
+  })
+})
+
+// Swedish display labels from docs/avgränsningar.md, shown in the create ticket form.
+describe('ticket display labels', () => {
+  it('has a Swedish label for each category', () => {
+    expect(CATEGORY_LABELS).toEqual({
+      OrdersDeliveries: 'Beställningar/leveranser',
+      Invoices: 'Fakturor',
+      ReturnsComplaints: 'Returer/reklamation',
+      Other: 'Övrigt',
+    })
+  })
+
+  it('has a Swedish label for each priority', () => {
+    expect(PRIORITY_LABELS).toEqual({ Low: 'Låg', Medium: 'Medel', High: 'Hög' })
   })
 })

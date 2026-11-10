@@ -34,6 +34,10 @@ public sealed class TicketConfiguration : IEntityTypeConfiguration<Ticket>
             .HasConversion<string>()
             .HasMaxLength(32)
             .IsRequired();
+        builder.Property(ticket => ticket.CustomerName)
+            .IsRequired();
+        builder.Property(ticket => ticket.CustomerEmail)
+            .IsRequired();
         builder.Property(ticket => ticket.CreatedAt)
             .IsRequired();
     }

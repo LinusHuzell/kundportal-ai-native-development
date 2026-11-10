@@ -7,9 +7,21 @@ test('app shell renders and redirects / to the ticket list', async ({ page }) =>
   await expect(page.getByRole('heading', { name: 'Tickets' })).toBeVisible()
 })
 
-test('navigation reaches the new ticket page', async ({ page }) => {
+// Screen readers pick the voice from the page language; the UI text is Swedish.
+test('the page language is Swedish', async ({ page }) => {
   await page.goto('/tickets')
-  await page.getByRole('link', { name: 'New ticket' }).click()
-  await expect(page).toHaveURL(/\/tickets\/new$/)
-  await expect(page.getByRole('heading', { name: 'New ticket' })).toBeVisible()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'sv')
+})
+
+// The button lives in the top navigation so tickets can be registered from every page
+// (Beslut in docs/specs/registrera-ärende.md). The detail page is a placeholder that loads nothing,
+// so /tickets/1 does not depend on seed data.
+test('Registrera ärende is reachable from every page', async ({ page }) => {
+  for (const path of ['/tickets', '/tickets/1']) {
+    await page.goto(path)
+    const openButton = page.getByRole('button', { name: 'Registrera ärende', exact: true })
+    await expect(openButton).toBeVisible()
+    await openButton.click()
+    await expect(page.getByRole('dialog', { name: 'Registrera ärende' })).toBeVisible()
+  }
 })
