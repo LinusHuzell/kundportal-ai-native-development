@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { api } from '../api/client'
+import TicketDetailsPanel from '../components/TicketDetailsPanel'
+import TicketHistory from '../features/ticket-detail/TicketHistory'
+import StatusForm from '../features/ticket-detail/StatusForm'
 import {
-  CATEGORY_LABELS,
   PRIORITY_LABELS,
   STATUS_LABELS,
   type Ticket,
@@ -13,6 +16,10 @@ type TicketListState =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'loaded'; tickets: Ticket[] }
+
+type SelectedTicketResult = { id: number } & (
+  { status: 'loaded'; ticket: Ticket } | { status: 'failed' }
+)
 
 const createdDateFormatter = new Intl.DateTimeFormat('sv-SE', { dateStyle: 'medium' })
 const statusClassNames: Record<TicketStatus, string> = {
@@ -28,8 +35,16 @@ const priorityClassNames: Record<TicketPriority, string> = {
 }
 
 export default function TicketListPage() {
+  const location = useLocation()
+  const requestedTicketId = (location.state as { selectedTicketId?: unknown } | null)
+    ?.selectedTicketId
   const [state, setState] = useState<TicketListState>({ status: 'loading' })
-  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null)
+  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(() =>
+    typeof requestedTicketId === 'number' && Number.isSafeInteger(requestedTicketId)
+      ? requestedTicketId
+      : null,
+  )
+  const [selectedTicketResult, setSelectedTicketResult] = useState<SelectedTicketResult>()
 
   useEffect(() => {
     let active = true
@@ -39,7 +54,11 @@ export default function TicketListPage() {
       .then((tickets) => {
         if (active) {
           setState({ status: 'loaded', tickets })
-          setSelectedTicketId(tickets[0]?.id ?? null)
+          setSelectedTicketId((current) =>
+            current !== null && tickets.some((ticket) => ticket.id === current)
+              ? current
+              : (tickets[0]?.id ?? null),
+          )
         }
       })
       .catch(() => {
@@ -51,9 +70,44 @@ export default function TicketListPage() {
     }
   }, [])
 
-  const selectedTicket = state.status === 'loaded'
-    ? state.tickets.find((ticket) => ticket.id === selectedTicketId) ?? null
-    : null
+  useEffect(() => {
+    if (selectedTicketId === null) return
+    let active = true
+
+    api.getTicket(selectedTicketId).then(
+      (ticket) => {
+        if (active) setSelectedTicketResult({ id: selectedTicketId, status: 'loaded', ticket })
+      },
+      () => {
+        if (active) setSelectedTicketResult({ id: selectedTicketId, status: 'failed' })
+      },
+    )
+
+    return () => {
+      active = false
+    }
+  }, [selectedTicketId])
+
+  const currentTicketResult = selectedTicketResult?.id === selectedTicketId
+    ? selectedTicketResult
+    : selectedTicketId === null
+      ? undefined
+      : { id: selectedTicketId, status: 'loading' as const }
+  const selectedTicket = currentTicketResult?.status === 'loaded' ? currentTicketResult.ticket : null
+
+  const handleStatusSaved = (updatedTicket: Ticket) => {
+    setSelectedTicketResult({ id: updatedTicket.id, status: 'loaded', ticket: updatedTicket })
+    setState((current) =>
+      current.status === 'loaded'
+        ? {
+            ...current,
+            tickets: current.tickets.map((ticket) =>
+              ticket.id === updatedTicket.id ? updatedTicket : ticket,
+            ),
+          }
+        : current,
+    )
+  }
 
   return (
     <div>
@@ -134,71 +188,33 @@ export default function TicketListPage() {
           className="min-w-0 overflow-hidden rounded-[7px] border border-line bg-portal/80"
           aria-labelledby="ticket-details-title"
         >
-          <div className="border-b border-line px-5 py-[18px]">
-            <p className="mb-1 text-[10px] font-bold tracking-[0.12em] text-teal">VALT ÄRENDE</p>
-            <h2 className="text-base font-semibold text-white" id="ticket-details-title">Ärendedetaljer</h2>
-          </div>
-
-          {selectedTicket ? (
-            <div className="divide-y divide-line">
-              <section className="p-5" aria-label="Ärendebeskrivning">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-copy-dim">
-                  {selectedTicket.ticketNumber}
-                </p>
-                <h3 className="text-lg font-semibold leading-snug text-white">{selectedTicket.title}</h3>
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-copy-muted">
-                  {selectedTicket.description}
-                </p>
-              </section>
-
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-5 p-5 text-sm">
-                <div>
-                  <dt className="text-xs text-copy-dim">Kategori</dt>
-                  <dd className="mt-1 font-medium text-white">{CATEGORY_LABELS[selectedTicket.category]}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-copy-dim">Prioritet</dt>
-                  <dd className="mt-1 font-medium text-white">{PRIORITY_LABELS[selectedTicket.priority]}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-copy-dim">Status</dt>
-                  <dd className="mt-1 font-medium text-white">{STATUS_LABELS[selectedTicket.status]}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-copy-dim">Skapad</dt>
-                  <dd className="mt-1 font-medium text-white">
-                    {createdDateFormatter.format(new Date(selectedTicket.createdAt))}
-                  </dd>
-                </div>
-              </dl>
-
-              <section className="p-5" aria-label="Kunduppgifter">
-                <h3 className="mb-3 text-sm font-semibold text-white">Kund</h3>
-                <dl className="grid gap-3 text-sm">
-                  <div>
-                    <dt className="text-xs text-copy-dim">Namn</dt>
-                    <dd className="mt-1 break-words text-copy-muted">
-                      {selectedTicket.customerName || 'Uppgift saknas'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-copy-dim">E-post</dt>
-                    <dd className="mt-1 break-all text-copy-muted">
-                      {selectedTicket.customerEmail || 'Uppgift saknas'}
-                    </dd>
-                  </div>
-                </dl>
-              </section>
-            </div>
-          ) : (
-            <p className="px-5 py-7 text-[13px] text-copy-muted" role="status">
-              {state.status === 'loading'
+          <TicketDetailsPanel
+            ticket={selectedTicket}
+            emptyMessageRole={currentTicketResult?.status === 'failed' ? 'alert' : 'status'}
+            emptyMessage={
+              currentTicketResult?.status === 'loading' || state.status === 'loading'
                 ? 'Laddar ärendedetaljer…'
-                : state.status === 'error'
+                : currentTicketResult?.status === 'failed' || state.status === 'error'
                   ? 'Ärendedetaljerna är inte tillgängliga.'
-                  : 'Inget ärende valt.'}
-            </p>
-          )}
+                  : 'Inget ärende valt.'
+            }
+          >
+            {selectedTicket && (
+              <>
+                <section aria-labelledby="ticket-status-title">
+                  <h2 id="ticket-status-title" className="text-sm font-semibold text-white">
+                    Ändra status
+                  </h2>
+                  <StatusForm
+                    key={selectedTicket.id}
+                    ticket={selectedTicket}
+                    onSaved={handleStatusSaved}
+                  />
+                </section>
+                <TicketHistory ticketId={selectedTicket.id} />
+              </>
+            )}
+          </TicketDetailsPanel>
         </aside>
       </div>
     </div>

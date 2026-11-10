@@ -231,7 +231,9 @@ test('AK-1, AK-9: a valid ticket is saved, the drawer closes and a confirmation 
   expect(ticket).toMatchObject({ title, status: 'New', category: 'Invoices' })
   expect(Number.isNaN(Date.parse(ticket.createdAt))).toBe(false)
   await expectDrawerClosed(page, dialog)
-  await expect(page.getByRole('status')).toHaveText('Ärendet har registrerats.')
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Ärendet har registrerats.' }),
+  ).toHaveText('Ärendet har registrerats.')
   await expect(openButton).toBeFocused()
 })
 
@@ -252,24 +254,24 @@ test('AK-9: the confirmation disappears after 5 seconds', async ({ page }) => {
   const { dialog } = await openDrawer(page)
   await fillValidForm(dialog, uniqueTitle())
   await save(dialog)
-  const status = page.getByRole('status')
+  const status = page.getByRole('status').filter({ hasText: 'Ärendet har registrerats.' })
   await expect(status).toHaveText('Ärendet har registrerats.')
 
   await page.clock.runFor(4_900)
   await expect(status).toHaveText('Ärendet har registrerats.')
   await page.clock.runFor(100)
 
-  await expect(status).toHaveText('')
+  await expect(status).toHaveCount(0)
 })
 
 test('AK-9: the confirmation disappears when the drawer is opened again', async ({ page }) => {
   const { dialog } = await openDrawer(page)
   await fillValidForm(dialog, uniqueTitle())
   await save(dialog)
-  const status = page.getByRole('status')
+  const status = page.getByRole('status').filter({ hasText: 'Ärendet har registrerats.' })
   await expect(status).toHaveText('Ärendet har registrerats.')
 
   await openDrawer(page)
 
-  await expect(status).toHaveText('')
+  await expect(status).toHaveCount(0)
 })

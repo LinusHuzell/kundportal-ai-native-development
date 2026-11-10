@@ -1,192 +1,180 @@
 # Spec: Visa ärende och ändra status
 
 Ägare: Linus
-Se [docs/avgränsningar.md](../avgränsningar.md) för teknikval och avgränsning.
+Senast uppdaterad: 2026-11-10
 
-## Vad momentet gör
-En handläggare öppnar ett ärende och ser alla dess uppgifter på en egen sida.
-På samma sida kan handläggaren ändra ärendets status. Den nya statusen sparas
-och finns kvar när sidan laddas om.
+Se [avgränsningar](../avgränsningar.md) och [arbetssätt](../arbetssätt.md).
+
+## Sammanfattning
+
+Handläggaren väljer ett ärende på startsidan och ser dess uppgifter i panelen "VALT ÄRENDE / Ärendedetaljer". Samma panel innehåller statusändring och historik. Äldre länkar till `/tickets/{id}` leder till startsidan och markerar ärendet.
+
+## Mål
+
+- Ärendets uppgifter och åtgärder finns tillgängliga från startsidan.
+- En statusändring sparas och visas i både listan och den valda ärendepanelen.
+- Ärendehistoriken visas utan att blockera övriga ärendefunktioner.
 
 ## Ingår
-- Frontend: detaljsida på `/tickets/{id}` med ärendets uppgifter och ett formulär för att ändra status
-- Backend: endpoints `GET /api/tickets/{id}` och `PUT /api/tickets/{id}/status`
-- Statusregeln och felmeddelandena i Felfall, i både frontend och backend
+
+- Val av ärende och presentation på `/tickets`.
+- Ändra ärendets status från den valda ärendepanelen.
+- Visa historik i den valda ärendepanelen.
+- Omdirigera äldre länkar till `/tickets/{id}` till listan och välja ärendet om det finns.
+- Befintliga backend-endpoints och statusregler.
 
 ## Ingår inte
-- Länken från ärendelistan till detaljsidan. Detaljsidan nås via sin adress.
-- Redigering av ärendets övriga fält
-- Ärendehistorik
-- Radering av ärenden (utanför avgränsningen)
+
+- En separat detaljsida för `/tickets/{id}`.
+- Redigera ärendets övriga fält eller radera ärenden.
+- Händelser för statusändringar eller redigering.
+
+## Användare och förutsättningar
+
+- **Användare/roll:** Handläggare.
+- **Förutsättningar:** Startsidan kan hämta ärendelistan.
+- **Beroenden:** [Ärendehistorik](ärendehistorik-presentation-detaljvy.md), [API-kontrakt](../api/kontrakt.md).
 
 ## Beslut
-- Ett ärende kan byta mellan alla statusar, men aldrig tillbaka till "Nytt". "Nytt" sätts
-  bara när ärendet registreras. Beslutat i teamet.
-- Att sätta samma status som ärendet redan har är inget fel. Svaret är `200` och ärendet
-  är oförändrat.
-- Ärendenumret är ärendets `ticketNumber`, t.ex. "SR-2026-1004". Sidans adress använder `id`.
-- "Nytt" visas i statuslistan men går inte att välja. Listan visar alltid ärendets
-  aktuella status, och skärmläsare läser upp att alternativet inte är tillgängligt.
-- Statusen sparas med knappen "Spara status", inte direkt när ett värde väljs. Annars
-  kan en ändring sparas av misstag när man bläddrar i listan med piltangenterna.
-- Bekräftelsen efter en sparning står kvar tills nästa sparning, utan tidsgräns.
+
+- Ett ärende kan byta mellan alla statusar, men aldrig tillbaka till "Nytt". "Nytt" sätts bara när ärendet registreras.
+- Att spara samma status är inget fel. Svaret är `200` och ärendet är oförändrat.
+- Status sparas med knappen "Spara status", inte när ett värde väljs.
+- "Nytt" visas i statuslistan men går inte att välja.
+- Äldre `/tickets/{id}`-länkar väljer ärendet om det finns i listan. Om det saknas används listans normala val.
 
 ## Visning
-Etiketterna på detaljsidan och hur värdena visas. En etikett talar om vad ett värde är,
-t.ex. "Prioritet" för "Hög".
 
-Skärmläsare läser upp alla etiketter. Kategori, Prioritet, Status och Beskrivning syns
-också som text. Ärendenummer, Skapad, Namn och E-post syns inte som text, eftersom
-designen visar dem på annat sätt:
-- Ärendenummer: "Ärende" står framför numret
-- Skapad: en kalenderikon står framför datumet
-- Namn: namnet står i kortet "Kund"
-- E-post: en brevikon står framför adressen
+Panelen visar alla etiketter och värden. Ärendets titel är en rubrik i panelen, inte sidans huvudrubrik.
 
 | Etikett | Värde |
 |---|---|
-| (sidrubrik) | Rubrik |
+| Rubrik | Ärendets titel |
 | Ärendenummer | `ticketNumber`, t.ex. "SR-2026-1004" |
 | Status | Nytt, Pågående, Väntar på kund, Avslutat |
 | Prioritet | Låg, Medel, Hög |
 | Kategori | Beställningar/leveranser, Fakturor, Returer/reklamation, Övrigt |
-| Skapad | Datum och klockslag i svenskt format, t.ex. "10 nov. 2026 14:30" ¹ |
+| Skapad | Svenskt datum och klockslag i webbläsarens tidszon |
 | Namn | Kundens namn |
 | E-post | Kundens e-postadress |
-| Beskrivning | Beskrivning |
+| Beskrivning | Ärendets beskrivning |
 
-¹ I webbläsarens tidszon.
+## Regler och fel
 
-## Felfall
-Detta är den enda källan för regler och felmeddelanden i momentet.
-
-| Fall | Var | Meddelande |
-|---|---|---|
-| Ärendet finns inte, eller adressen har inget giltigt id | Detaljsidan | "Ärendet hittades inte" |
-| Servern svarar med fel eller går inte att nå när ärendet hämtas | Detaljsidan | "Ärendet kunde inte hämtas. Försök igen senare." |
-| "Nytt" är valt när handläggaren sparar | Statusformuläret (bara frontend) | "Välj en ny status" |
-| Servern svarar med fel eller går inte att nå när statusen sparas | Statusformuläret | "Statusen kunde inte sparas. Försök igen." |
-| `status` är `"New"` | API, `errors.status` | "Status kan inte ändras till Nytt" |
-| `status` saknas, är tom eller är inte en giltig status ² | API, `errors.status` | "Välj en giltig status" |
-
-² Giltig är exakt ett av namnen `New`, `InProgress`, `WaitingForCustomer`, `Closed`, med
-samma stora och små bokstäver.
+| Situation | Resultat eller meddelande |
+|---|---|
+| Listan laddas | "Laddar ärenden…" |
+| Listan kan inte hämtas | "Kunde inte hämta ärenden. Försök igen." |
+| Listan är tom | "Inga ärenden hittades." och panelen visar "Inget ärende valt." |
+| Kompletta uppgifter för valt ärende kan inte hämtas | "Ärendedetaljerna är inte tillgängliga." visas som alert; listan finns kvar |
+| Giltig äldre detaljlänk | Startsidan öppnas och väljer ärendet om det finns |
+| Ogiltig eller okänd äldre detaljlänk | Startsidan öppnas; listans normala val används |
+| "Nytt" sparas som status | "Välj en ny status"; inget API-anrop skickas |
+| Statussparning misslyckas | "Statusen kunde inte sparas. Försök igen." |
+| API-status är `New` | `400`, "Status kan inte ändras till Nytt" i `errors.status` |
+| Status saknas eller är ogiltig | `400`, "Välj en giltig status" i `errors.status` |
 
 ## Acceptanskriterier
 
-### Visa ärende
+### Startsida
 
-**AK-1**
-- Given: Ett ärende finns
-- When: Handläggaren öppnar ärendets adress
-- Then: Rubriken visas som sidrubrik och övriga uppgifter visas med etiketterna och värdena i Visning
+**AK-1: Visa valt ärende**
+- Given: Ett ärende finns i listan
+- When: Handläggaren väljer ärendet
+- Then: Panelen "VALT ÄRENDE / Ärendedetaljer" visar titel och samtliga uppgifter enligt Visning
 
-**AK-2**
+**AK-2: Visa skapandetid**
 - Given: Ett ärende skapades 2026-11-10 kl. 14:30 i webbläsarens tidszon
-- When: Detaljsidan visas
+- When: Handläggaren väljer ärendet
 - Then: Skapad visas som "10 nov. 2026 14:30"
 
-**AK-3**
-- Given: Inget ärende har det id som står i adressen, eller id:t är inte ett tal
-- When: Handläggaren öppnar adressen
-- Then: "Ärendet hittades inte" visas
+**AK-3: Äldre detaljlänk**
+- Given: Handläggaren öppnar `/tickets/{id}`
+- When: Ärendet finns i listan
+- Then: `/tickets` visas med ärendet valt
 
-**AK-4**
-- Given: Handläggaren har öppnat ett ärendes adress
-- When: Svaret från servern inte har kommit än
-- Then: "Laddar ärende…" visas och läses upp av skärmläsare
+**AK-6: Byt valt ärende**
+- Given: Ett ärende visas i panelen
+- When: Handläggaren väljer ett annat ärende i listan
+- Then: Panelen visar det nya ärendet och adressen är fortsatt `/tickets`
 
-**AK-5**
-- Given: Handläggaren öppnar ett ärendes adress
-- When: Servern svarar med ett serverfel (5xx) eller inte går att nå
-- Then: "Ärendet kunde inte hämtas. Försök igen senare." visas och läses upp av skärmläsare
+**AK-4: Listan laddas**
+- Given: Handläggaren öppnar startsidan
+- When: Listsvaret inte har kommit än
+- Then: "Laddar ärenden…" visas och läses upp av skärmläsare
 
-**AK-6**
-- Given: Detaljsidan visar ett ärende, laddar, eller visar ett fel
-- When: Handläggaren väljer "Tillbaka till ärendelistan"
-- Then: Ärendelistan visas
+**AK-5: Listan kunde inte hämtas**
+- Given: Handläggaren öppnar startsidan
+- When: Listan svarar med ett fel eller inte går att nå
+- Then: "Kunde inte hämta ärenden. Försök igen." visas och läses upp av skärmläsare
 
 ### Ändra status
 
 **AK-7**
-- Given: Ett ärende med en viss status visas
+- Given: Ett ärende är valt
 - When: Handläggaren öppnar listan "Status"
-- Then: Ärendets aktuella status är förvald, alla fyra statusar finns, och "Nytt" går inte att välja
+- Then: Aktuell status är förvald, alla fyra statusar finns och "Nytt" går inte att välja
 
 **AK-8**
-- Given: Ett ärende visas
+- Given: Ett ärende är valt
 - When: Handläggaren väljer en annan status än "Nytt" och väljer "Spara status"
-- Then: Statusen bland ärendets uppgifter visar den nya statusen, "Status ändrad till <status>"
-  visas och läses upp av skärmläsare, och fokus stannar på knappen
+- Then: Statusen uppdateras i panelen och listan, "Status ändrad till <status>" visas och läses upp, och fokus stannar på knappen
 
 **AK-9**
-- Given: Handläggaren har ändrat status på ett ärende
-- When: Sidan laddas om
-- Then: Den nya statusen visas
+- Given: Handläggaren har ändrat status
+- When: Startsidan laddas om
+- Then: Den sparade statusen visas i panelen och listan
 
 **AK-10**
-- Given: Ett ärende med status "Nytt" visas och "Nytt" är fortfarande valt
+- Given: "Nytt" är valt
 - When: Handläggaren väljer "Spara status"
-- Then: "Välj en ny status" visas kopplat till listan via aria-describedby, fokus flyttas till listan, och inget anrop skickas
+- Then: "Välj en ny status" kopplas till listan med `aria-describedby`, fokus flyttas till listan och inget API-anrop skickas
 
 **AK-11**
-- Given: Handläggaren har valt "Spara status" och svaret från servern har inte kommit
-- When: Handläggaren försöker välja "Spara status" igen
-- Then: Knappen är inaktiverad och visar "Sparar…", och inget nytt anrop skickas
+- Given: En statussparning pågår
+- When: Handläggaren försöker spara igen
+- Then: Knappen visar "Sparar…" och inget nytt anrop skickas
 
 **AK-12**
-- Given: Handläggaren har valt en ny status
-- When: Hen väljer "Spara status" och servern svarar med ett fel eller inte går att nå
-- Then: "Statusen kunde inte sparas. Försök igen." visas och läses upp av skärmläsare, det valda
-  värdet ligger kvar i listan, och statusen bland ärendets uppgifter är oförändrad
+- Given: Handläggaren sparar en ny status
+- When: Servern svarar med fel eller inte går att nå
+- Then: Felmeddelandet visas, det valda värdet ligger kvar och den sparade statusen är oförändrad
+
+**AK-20: Status och historik i panelen**
+- Given: Ett ärende är valt
+- When: Ärendet visas på startsidan
+- Then: Panelen innehåller statusformulär och historik
+
+**AK-21: Detaljerna kunde inte hämtas**
+- Given: Ärendelistan har laddats och ett ärende är valt
+- When: Hämtningen av det valda ärendets fullständiga uppgifter misslyckas
+- Then: "Ärendedetaljerna är inte tillgängliga." visas som alert och listan finns kvar
 
 ### API (backend)
 
-**AK-13**
-- Given: Ett ärende finns
-- When: `GET /api/tickets/{id}` anropas
-- Then: Svaret är `200` med ärendets alla fält
+**AK-13** `GET /api/tickets/{id}` returnerar `200` och ärendets alla fält när ärendet finns.
 
-**AK-14**
-- Given: Inget ärende har id:t
-- When: `GET /api/tickets/{id}` anropas
-- Then: Svaret är `404` som problem+json
+**AK-14** `GET /api/tickets/{id}` returnerar `404` som problem+json när ärendet saknas.
 
-**AK-15**
-- Given: Ett ärende finns
-- When: `PUT /api/tickets/{id}/status` anropas med en giltig status som inte är `New`
-- Then: Svaret är `200` med ärendet och den nya statusen, och statusen är sparad
+**AK-15** En giltig `PUT /api/tickets/{id}/status` sparar statusen och returnerar `200` med ärendet.
 
-**AK-16**
-- Given: Ett ärende har status `InProgress`
-- When: `PUT /api/tickets/{id}/status` anropas med `InProgress`
-- Then: Svaret är `200` och ärendet är oförändrat
+**AK-16** Att spara den redan aktuella statusen returnerar `200` och lämnar ärendet oförändrat.
 
-**AK-17**
-- Given: Ett ärende finns
-- When: `PUT /api/tickets/{id}/status` anropas med `New`
-- Then: Svaret är `400` med "Status kan inte ändras till Nytt" i `errors.status`, och statusen är oförändrad
+**AK-17** `New` avvisas med `400` och "Status kan inte ändras till Nytt" i `errors.status`.
 
-**AK-18**
-- Given: Ett ärende finns
-- When: `PUT /api/tickets/{id}/status` anropas utan status, med en tom status eller med ett värde som inte är en status
-- Then: Svaret är `400` med "Välj en giltig status" i `errors.status`, och statusen är oförändrad
+**AK-18** Saknad eller ogiltig status avvisas med `400` och "Välj en giltig status" i `errors.status`.
 
-**AK-19**
-- Given: Inget ärende har id:t
-- When: `PUT /api/tickets/{id}/status` anropas med en giltig status
-- Then: Svaret är `404` som problem+json
+**AK-19** Statusuppdatering av ett okänt ärende returnerar `404` som problem+json.
 
-## Verifieringsmetod
-Nivåerna följer [docs/teststrategi.md](../teststrategi.md): den billigaste nivån som kan fånga felet.
+## Verifiering
 
-| AK | Nivå | Varför |
+Följ projektets [teststrategi](../teststrategi.md). Varje AK verifieras på billigaste lämpliga nivå.
+
+| Krav/AK | Verifiering | Nivå |
 |---|---|---|
-| AK-1, AK-3, AK-6, AK-7, AK-8, AK-9, AK-10 | End-to-end mot hela stacken | Användarflöden som den riktiga stacken kan framkalla. Testerna skapar sina egna ärenden via API:t |
-| AK-2 | Frontend unit (Vitest) | Formateringslogik med fast tidszon, utan webbläsare |
-| AK-4, AK-5, AK-11, AK-12 | End-to-end med mockat API | Långsamma svar, serverfel och nätverksfel går inte att framkalla med den riktiga stacken |
-| AK-13–AK-19 | Backend integration (Postgres) | HTTP-kontraktet och persistens. Statusen läses tillbaka via `GET` |
-| AK-17, AK-18 | Även backend unit | Statusregelns kantfall utan databas |
+| AK-1–3, AK-6–10, AK-20 | Skapa egna ärenden via API och välj dem på startsidan; verifiera även äldre länk | E2E, full stack |
+| AK-4, AK-5, AK-11, AK-12, AK-21 | Fördröjt svar, serverfel och nätverksfel | E2E, mockat API |
+| AK-13–AK-19 | HTTP-kontrakt och beständighet | Backend integration |
+| AK-17, AK-18 | Statusregelns gränsfall | Backend unit |
 
-- Sabotagekontroll: sparningen i AK-15 och regeln i AK-17 kopplas tillfälligt bort för att visa att testerna faller av rätt anledning.
-- Manuell kontroll: tangentbord och skärmläsare (VoiceOver) för fokus och uppläsning i AK-4, AK-5, AK-8, AK-10 och AK-12.
+Manuell kontroll: tangentbord och skärmläsare för fokus och live-meddelanden.

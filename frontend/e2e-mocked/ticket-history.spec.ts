@@ -2,8 +2,8 @@ import { expect, test, type Page, type Route } from '@playwright/test'
 import type { ProblemDetails } from '../src/api/client.ts'
 import type { Ticket, TicketHistoryEvent } from '../src/types/ticket.ts'
 
-// AK-7 and AK-10 to AK-12 for "Ärendehistorik i detaljvyn"
-// (docs/specs/ärendehistorik-presentation-detaljvy.md). The ticket and history APIs are mocked.
+// AK-7 and AK-10 to AK-12 for the selected-ticket panel on the homepage.
+// The ticket and history APIs are mocked.
 
 const ticket: Ticket = {
   id: 42,
@@ -21,14 +21,21 @@ const ticket: Ticket = {
 const historyFailed = 'Historiken kunde inte hämtas. Försök igen.'
 
 async function mockTicketApi(page: Page, handleHistory: (route: Route) => Promise<void>) {
-  await page.route(`**/api/tickets/${ticket.id}`, (route) =>
+  await page.route('**/api/tickets', (route) =>
     route.request().method() === 'GET'
       ? route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(ticket),
+          body: JSON.stringify([ticket]),
         })
       : route.fallback(),
+  )
+  await page.route(`**/api/tickets/${ticket.id}`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(ticket),
+    }),
   )
   await page.route(`**/api/tickets/${ticket.id}/history`, (route) =>
     route.request().method() === 'GET' ? handleHistory(route) : route.fallback(),
@@ -48,12 +55,13 @@ const main = (page: Page) => page.getByRole('main')
 const history = (page: Page) => main(page).getByRole('region', { name: 'Historik' })
 
 async function openTicket(page: Page) {
-  await page.goto(`/tickets/${ticket.id}`)
-  await expect(main(page).getByRole('heading', { level: 1, name: ticket.title })).toBeVisible()
+  await page.goto('/tickets')
+  await main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` }).click()
+  await expect(main(page).getByRole('heading', { level: 3, name: ticket.title })).toBeVisible()
 }
 
 async function expectTicketAndStatusForm(page: Page) {
-  await expect(main(page).getByRole('heading', { level: 1, name: ticket.title })).toBeVisible()
+  await expect(main(page).getByRole('heading', { level: 3, name: ticket.title })).toBeVisible()
   const status = main(page).getByRole('combobox', { name: 'Status' })
   await expect(status).toBeVisible()
   await status.selectOption('Closed')
@@ -144,9 +152,10 @@ test('AK-11: a pending history response shows loading while the ticket is availa
     })
   })
 
-  await page.goto(`/tickets/${ticket.id}`)
+  await page.goto('/tickets')
+  await main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` }).click()
 
-  await expect(main(page).getByRole('heading', { level: 1, name: ticket.title })).toBeVisible()
+  await expect(main(page).getByRole('heading', { level: 3, name: ticket.title })).toBeVisible()
   await expect(history(page).getByRole('status')).toHaveText('Laddar historik…')
   respond()
   await expect(history(page).getByRole('listitem')).toContainText('Ärendet registrerades')

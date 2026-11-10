@@ -3,7 +3,7 @@
 ## Teknikval
 * **Lokal utvecklingsmiljö:** Docker
 * **Databas:** Postgres
-* **Backend:** .NET, Entity Framework (ORM)
+* **Backend :** .NET, Entity Framework (ORM)
 * **Frontend:** React, Tailwind
 * **Design:** Figma
 * **Tester:** Playwright

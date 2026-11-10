@@ -16,8 +16,8 @@ test('the page language is Swedish', async ({ page }) => {
 })
 
 // The button lives in the top navigation so tickets can be registered from every page
-// (Beslut in docs/specs/registrera-ärende.md). The detail page is a placeholder that loads nothing,
-// so /tickets/1 does not depend on seed data.
+// (Beslut in docs/specs/registrera-ärende.md). Legacy detail routes redirect to the list without
+// depending on seed data.
 test('Registrera ärende is reachable from every page', async ({ page }) => {
   for (const path of ['/tickets', '/tickets/1']) {
     await page.goto(path)
