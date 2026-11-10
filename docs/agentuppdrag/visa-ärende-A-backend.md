@@ -256,3 +256,89 @@ fortfarande rött på `501`.
 
 Känd begränsning: `POST`-svarets `createdAt` har högre precision än det som sparas.
 Toleransen finns kvar tills det rättas där ärendet skapas.
+
+### Kontrollpunkt 3: grönt och sabotage (2026-11-10)
+Körde `dotnet test` själv: 59 enhetstester och 30 integrationstester gröna. Granskade diffen mot
+fillistan och specen. Sabotagekontrollerna stämde med planen.
+
+Prövade toleransen från kontrollpunkt 2 genom att tillfälligt sätta den till noll. AK-13 blev grönt
+på macOS, där `DateTimeOffset.UtcNow` har mikrosekundsupplösning, men i Linux-containern
+`mcr.microsoft.com/dotnet/sdk:10.0` (samma OS som CI) har den 100 ns. Utan toleransen hade testet
+alltså varit grönt lokalt och fallit sporadiskt i CI. Toleransen behålls.
+
+## 4. Resultat
+
+Skriven av agenten efter steg 4–9. Inget är committat.
+
+### Ändrade filer
+
+- `backend/src/CustomerService.Api/Features/Tickets/UpdateTicketStatus.cs`: validatorn och handlern för `PUT`.
+- `backend/src/CustomerService.Api/Features/Tickets/GetTicket.cs`: handlern för `GET`.
+- `backend/src/CustomerService.Api/Features/Tickets/TicketModels.cs`: `TicketResponse.From(Ticket)`, bara mappning.
+- `docs/api/openapi.json`: genererad. Den enda ändringen är att `UpdateStatusRequest.status` blir
+  `["null", "string"]` i stället för en referens till `TicketStatus`.
+- `docs/api/kontrakt.md`: stycke under `UpdateStatusRequest` och en regeltabell för `status`.
+  Raden "`status` måste vara ett giltigt enum-värde" är borttagen.
+- Testfilerna är oförändrade sedan `a81cdc9`.
+
+### Avvikelser från planen
+
+- Inga i koden. Felmeddelandena för `status` står i `kontrakt.md` som en egen tabell efter stycket om
+  `POST`, så att stycket "Vid sparning sätts `status` till `New`" fortfarande läses som en regel för `POST`.
+
+### Kommandon och verklig utskrift
+
+`cd backend && dotnet test CustomerService.slnx` efter implementationen och efter varje återställning:
+```
+Passed!  - Failed:     0, Passed:    59, Skipped:     0, Total:    59 - CustomerService.Api.UnitTests.dll (net10.0)
+Passed!  - Failed:     0, Passed:    30, Skipped:     0, Total:    30 - CustomerService.Api.IntegrationTests.dll (net10.0)
+```
+
+`cd backend && dotnet build src/CustomerService.Api -p:GenerateOpenApi=true`:
+```
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+```
+
+### Sabotagekontroll
+
+**(a) `SaveChangesAsync` bortkopplad i `PUT`.** Enhetstesterna: 59 av 59 gröna (väntat, ingen databas).
+Integrationstesterna: `Failed: 3, Passed: 27`.
+- `ValidStatusIsSaved`: `Expected: "WaitingForCustomer"`, `Actual: "New"` vid läsningen via `GET`. Rätt anledning.
+- `SameStatusReturns200AndLeavesTicketUnchanged` och `NewReturns400OnStatusAndLeavesStatusUnchanged`:
+  `Expected: "InProgress"`, `Actual: "New"` i förberedelsen (`CreateTicketWithStatusInProgressAsync`, rad 43).
+  Det var väntat enligt planen.
+- `ValidStatusReturns200WithTicketAndNewStatus` var grön. Svaret byggs från entiteten i minnet, så bara
+  läsningen via `GET` fångar felet.
+
+**(b) New-regeln borttagen i validatorn.** `"New"` blir då ett giltigt namn.
+- Enhet: `Failed: 1, Passed: 58`. `New_is_rejected` föll: `Expected: ["status"]`, `Actual: []` (inga fel).
+- Integration: `Failed: 1, Passed: 29`. `NewReturns400OnStatusAndLeavesStatusUnchanged` föll:
+  `Expected: BadRequest`, `Actual: OK`.
+
+Koden är återställd efter varje sabotage, och efter det är alla 89 tester gröna (se ovan).
+
+### AK
+
+| AK | Test | Resultat |
+|---|---|---|
+| AK-13 | `GetTicketTests.ExistingTicketReturns200WithAllFields` | Grön |
+| AK-14 | `GetTicketTests.UnknownIdReturns404AsProblemJson` | Grön |
+| AK-15 | `UpdateTicketStatusTests.ValidStatusReturns200WithTicketAndNewStatus`, `ValidStatusIsSaved` | Gröna |
+| AK-16 | `UpdateTicketStatusTests.SameStatusReturns200AndLeavesTicketUnchanged` | Grön |
+| AK-17 | `UpdateTicketStatusTests.NewReturns400OnStatusAndLeavesStatusUnchanged`, enhet `New_is_rejected` | Gröna |
+| AK-18 | `UpdateTicketStatusTests.MissingEmptyOrUnknownStatusReturns400OnStatusAndLeavesStatusUnchanged` (3 fall), enhet `Missing_or_unknown_status_is_rejected` (7 fall) | Gröna |
+| AK-19 | `UpdateTicketStatusTests.UnknownIdReturns404AsProblemJson` | Grön |
+
+Inga backend-AK är overifierade. AK-1 till AK-12 hör till uppdrag B.
+
+### Osäkerheter
+
+- Endpointen validerar före uppslagningen, så ogiltig status på ett okänt id ger `400`. Ordningen är
+  inte specad och inte testad (beslut 6).
+- `GET /api/tickets/abc` ger `404` med tom kropp från routevillkoret, inte problem+json. Det är beslutat
+  att inte ändra eller testa det.
+- Jag har inte kört E2E-sviten eller frontend. Ändringen i `openapi.json` rör bara requesten, men
+  uppdrag B bör kontrollera att klienten typar `status` själv.
+- `AGENTS.md` och `docs/teststrategi.md` säger fortfarande att endpoints är stubbar. De rättas separat.
