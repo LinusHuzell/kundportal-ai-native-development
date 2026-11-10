@@ -16,8 +16,8 @@
 
 - Ikoner skrivs som dekorativa inline-SVG:er i komponenterna. Tailwind används för storlek, färg och placering, inte som ikonkälla.
 - Ikonerna har inga externa ikonpaket eller andra beroenden.
-- Använd samma visuella symbol för samma fält i olika vyer, till exempel etikett för kategori, flagga för prioritet, person för namn och kuvert för e-post.
-- Statusikoner används likadant i ärendelistan och detaljpanelen: Nytt har ett plus, Pågående en klocka, Väntar på kund en pratbubbla och Avslutat en bock i cirkel. Visa alltid statusens textetikett tillsammans med ikonen.
+- Använd samma visuella symbol för samma fält i olika vyer, till exempel hash för ärendenummer, dokument för beskrivning, etikett för kategori, flagga för prioritet, person för namn och kuvert för e-post.
+- I ärendelistan visar statusikonen det aktuella värdet: Nytt har ett plus, Pågående en klocka, Väntar på kund en pratbubbla och Avslutat en bock i cirkel. I detaljpanelen är ikonen för fältet Status generell och densamma för alla värden. Visa alltid statusens textetikett tillsammans med ikonen.
 - Ikoner som bara förstärker en synlig textetikett ska döljas för hjälpmedel (`aria-hidden="true"`). Textetiketten är fortsatt fältets tillgängliga namn.
 
 ---

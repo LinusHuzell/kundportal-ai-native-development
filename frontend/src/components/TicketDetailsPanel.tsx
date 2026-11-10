@@ -5,7 +5,6 @@ import {
   STATUS_LABELS,
   type Ticket,
 } from '../types/ticket'
-import TicketStatusIcon from './TicketStatusIcon'
 
 const createdDateFormatter = new Intl.DateTimeFormat('sv-SE', {
   dateStyle: 'medium',
@@ -65,13 +64,40 @@ export default function TicketDetailsPanel({
           <section className="p-5" aria-label="Ärendebeskrivning">
             <dl>
               <dt className="sr-only">Ärendenummer</dt>
-              <dd className="mb-2 text-[10px] font-bold uppercase tracking-wider text-copy-dim">
+              <dd className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-copy-dim">
+                <svg
+                  aria-hidden="true"
+                  className="size-3.5 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.7"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M4 9h16M4 15h16M10 3 8 21m8-18-2 18" />
+                </svg>
                 {ticket.ticketNumber}
               </dd>
             </dl>
             <h3 className="text-lg font-semibold leading-snug text-white">{ticket.title}</h3>
             <dl className="mt-4">
-              <dt className="sr-only">Beskrivning</dt>
+              <dt className="mb-1.5 flex items-center gap-1.5 text-xs text-copy-dim">
+                <svg
+                  aria-hidden="true"
+                  className="size-3.5 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.7"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6M8 13h8M8 17h8" />
+                </svg>
+                Beskrivning
+              </dt>
               <dd className="whitespace-pre-wrap text-sm leading-6 text-copy-muted">
                 {ticket.description}
               </dd>
@@ -89,7 +115,21 @@ export default function TicketDetailsPanel({
             </div>
             <div>
               <dt className="flex items-center gap-1.5 text-xs text-copy-dim">
-                <TicketStatusIcon status={ticket.status} className="size-3.5 shrink-0" />
+                <svg
+                  aria-hidden="true"
+                  className="size-3.5 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.7"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M9 6h12M9 12h12M9 18h12" />
+                  <circle cx="4" cy="6" r="1" />
+                  <circle cx="4" cy="12" r="1" />
+                  <circle cx="4" cy="18" r="1" />
+                </svg>
                 Status
               </dt>
               <dd className="mt-1 font-medium text-white">{STATUS_LABELS[ticket.status]}</dd>
