@@ -24,6 +24,9 @@ async function mockGetTicket(page: Page, handler: (route: Route) => Promise<void
   await page.route(`**/api/tickets/${ticket.id}`, (route) =>
     route.request().method() === 'GET' ? handler(route) : route.fallback(),
   )
+  await page.route(`**/api/tickets/${ticket.id}/history`, (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) }),
+  )
 }
 
 const main = (page: Page) => page.getByRole('main')

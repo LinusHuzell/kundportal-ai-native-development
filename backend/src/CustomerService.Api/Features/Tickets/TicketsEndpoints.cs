@@ -8,6 +8,7 @@ public static class TicketsEndpoints
 
         ListTickets.Map(group);
         GetTicket.Map(group);
+        GetTicketHistory.Map(group);
         CreateTicket.Map(group);
         UpdateTicket.Map(group);
         UpdateTicketStatus.Map(group);

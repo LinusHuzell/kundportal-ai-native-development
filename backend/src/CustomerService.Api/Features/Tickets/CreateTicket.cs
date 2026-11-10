@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+
 using CustomerService.Api.Data;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace CustomerService.Api.Features.Tickets;
@@ -100,6 +102,13 @@ public static class CreateTicket
             CreatedAt = createdAt,
         };
         dbContext.Tickets.Add(ticket);
+        // Same SaveChangesAsync as the ticket, so both rows are saved or neither is.
+        dbContext.TicketEvents.Add(new TicketEvent
+        {
+            TicketId = id,
+            Type = TicketEventType.Created,
+            OccurredAt = createdAt,
+        });
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Results.Created($"/api/tickets/{ticket.Id}", new TicketResponse(

@@ -1,7 +1,9 @@
 using CustomerService.Api.Data;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+
 using Testcontainers.PostgreSql;
 
 namespace CustomerService.Api.IntegrationTests;
@@ -38,7 +40,7 @@ public sealed class ApiFixture : IAsyncLifetime
     public async Task ResetDatabaseAsync()
     {
         await using var dbContext = CreateDbContext();
-        await dbContext.Database.ExecuteSqlRawAsync("""TRUNCATE "Tickets" RESTART IDENTITY""");
+        await dbContext.Database.ExecuteSqlRawAsync("""TRUNCATE "TicketEvents", "Tickets" RESTART IDENTITY""");
     }
 
     public async Task DisposeAsync()

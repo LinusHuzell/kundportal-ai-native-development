@@ -66,12 +66,26 @@ fältet i stället för ett JSON-fel. Tillåtna värden är `InProgress`, `Waiti
 med exakt skiftläge. `New` går aldrig att sätta. Samma status som ärendet redan har ger `200` och
 ärendet är oförändrat. I `openapi.json` visas fältet som `string` (eller `null`) utan lista över värden.
 
+### TicketEvent
+
+En händelse i ett ärendes historik. Bara `type` och `occurredAt` returneras.
+
+```json
+{
+  "type": "Created",
+  "occurredAt": "2026-11-10T09:00:00Z"
+}
+```
+
+`type` är för närvarande alltid `Created`. Fler värden läggs till senare. `occurredAt` är serverns tid i UTC.
+
 ## Endpoints
 
 | Metod | Path | Beskrivning | Svar |
 |---|---|---|---|
 | GET | `/tickets` | Lista ärenden (senaste först) | `200` `Ticket[]` |
 | GET | `/tickets/{id}` | Hämta ett ärende | `200` `Ticket`, `404` |
+| GET | `/tickets/{id}/history` | Hämta ett ärendes historik (nyast först) | `200` `TicketEvent[]`, `404` |
 | POST | `/tickets` | Skapa ärende (status sätts till `New`) | `201` `Ticket` + `Location`, `400` |
 | PATCH | `/tickets/{id}` | Redigera ärende | `200` `Ticket`, `400`, `404` |
 | PUT | `/tickets/{id}/status` | Ändra status | `200` `Ticket`, `400`, `404` |
@@ -114,6 +128,18 @@ Regler och felmeddelanden för `PUT /tickets/{id}/status` kommer från tabellen 
 |---|---|---|
 | `status` | `New` | Status kan inte ändras till Nytt |
 | `status` | Saknas, tomt eller okänt värde (även fel skiftläge) | Välj en giltig status |
+Vid sparning sätts `status` till `New` och `createdAt` till serverns tid i UTC. Ärendet får också
+ett internt ärendenummer, `SR-<år>-<1000 + id>`, som inte finns i API:t.
+
+Vid sparning skapas också en `Created`-händelse med samma tidpunkt som `createdAt`. Ärendet och
+händelsen sparas i samma transaktion.
+
+## Historik
+
+`GET /tickets/{id}/history` returnerar ärendets händelser som en lista, nyast först. Vid samma
+tidpunkt kommer den med högst intern id först. Listan är tom (`200 []`) om ärendet saknar händelser,
+till exempel ärenden som skapades innan historiken infördes. Okänt ärende ger `404`. Händelserna
+raderas i databasen när ärendet raderas.
 
 ## Felformat
 
@@ -132,7 +158,3 @@ Valideringsfel (`400`) använder RFC 9457 `application/problem+json` med fältko
 ```
 
 `404` returnerar `problem+json` utan `errors`.
-
-## Öppna frågor
-
-- Ärendehistorik: föreslagen `GET /tickets/{id}/history` läggs till när ansvarig är utsedd.

@@ -1,10 +1,16 @@
 /// <reference types="vite/client" />
 // The reference and the .ts extension let e2e-mocked/ (tsconfig.node.json) import the types below.
-import type { CreateTicketInput, Ticket, TicketStatus, UpdateTicketInput } from '../types/ticket.ts'
+import type {
+  CreateTicketInput,
+  Ticket,
+  TicketHistoryEvent,
+  TicketStatus,
+  UpdateTicketInput,
+} from '../types/ticket.ts'
 
 /**
- * API client. createTicket, getTicket and updateTicketStatus follow docs/api/kontrakt.md; the
- * other methods are still stubs.
+ * API client. createTicket, getTicket, getTicketHistory and updateTicketStatus follow
+ * docs/api/kontrakt.md; the other methods are still stubs.
  * Base URL is configured via VITE_API_BASE_URL (see .env.example).
  */
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
@@ -75,6 +81,8 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
 export const api = {
   listTickets: async (): Promise<Ticket[]> => notImplemented('listTickets'),
   getTicket: (id: number): Promise<Ticket> => request<Ticket>(`/tickets/${id}`, { method: 'GET' }),
+  getTicketHistory: (id: number): Promise<TicketHistoryEvent[]> =>
+    request<TicketHistoryEvent[]>(`/tickets/${id}/history`, { method: 'GET' }),
   createTicket: (input: CreateTicketInput): Promise<Ticket> =>
     request<Ticket>('/tickets', {
       method: 'POST',

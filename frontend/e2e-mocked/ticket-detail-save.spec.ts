@@ -31,6 +31,9 @@ async function mockTicketApi(page: Page, handleStatusUpdate: (route: Route) => P
         })
       : route.fallback(),
   )
+  await page.route(`**/api/tickets/${ticket.id}/history`, (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) }),
+  )
   await page.route(`**/api/tickets/${ticket.id}/status`, (route) =>
     route.request().method() === 'PUT' ? handleStatusUpdate(route) : route.fallback(),
   )
