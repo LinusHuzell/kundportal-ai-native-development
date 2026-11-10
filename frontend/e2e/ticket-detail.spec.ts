@@ -42,8 +42,12 @@ function recordRequests(page: Page, matches: (method: string, url: string) => bo
 }
 
 const main = (page: Page) => page.getByRole('main')
+// The value of a detail is the <dd> right after its term in the <dl>.
 const detail = (page: Page, label: string) =>
-  main(page).getByRole('definition', { name: label, exact: true })
+  main(page)
+    .getByRole('term')
+    .filter({ hasText: new RegExp(`^${label}$`) })
+    .locator('+ dd')
 const statusSelect = (page: Page) => main(page).getByRole('combobox', { name: 'Status' })
 const saveButton = (page: Page) => main(page).getByRole('button', { name: 'Spara status' })
 

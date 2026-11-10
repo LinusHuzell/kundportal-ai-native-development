@@ -88,9 +88,12 @@ async function expectSaveFailed(page: Page) {
     SAVE_FAILED,
   )
   await expect(statusSelect(page)).toHaveValue('Closed')
-  await expect(main(page).getByRole('definition', { name: 'Status', exact: true })).toHaveText(
-    'Pågående',
-  )
+  await expect(
+    main(page)
+      .getByRole('term')
+      .filter({ hasText: /^Status$/ })
+      .locator('+ dd'),
+  ).toHaveText('Pågående')
 }
 
 test('AK-12: a server error is announced and keeps the chosen and the saved status', async ({

@@ -40,10 +40,10 @@ export const CATEGORY_LABELS: Record<TicketCategory, string> = {
 }
 
 export const STATUS_LABELS: Record<TicketStatus, string> = {
-  New: '',
-  InProgress: '',
-  WaitingForCustomer: '',
-  Closed: '',
+  New: 'Nytt',
+  InProgress: 'Pågående',
+  WaitingForCustomer: 'Väntar på kund',
+  Closed: 'Avslutat',
 }
 
 export const PRIORITY_LABELS: Record<TicketPriority, string> = {
