@@ -32,7 +32,16 @@ och finns kvar när sidan laddas om.
 - Bekräftelsen efter en sparning står kvar tills nästa sparning, utan tidsgräns.
 
 ## Visning
-Etiketterna på detaljsidan och hur värdena visas:
+Etiketterna på detaljsidan och hur värdena visas. En etikett talar om vad ett värde är,
+t.ex. "Prioritet" för "Hög".
+
+Skärmläsare läser upp alla etiketter. Kategori, Prioritet, Status och Beskrivning syns
+också som text. Ärendenummer, Skapad, Namn och E-post syns inte som text, eftersom
+designen visar dem på annat sätt:
+- Ärendenummer: "Ärende" står framför numret
+- Skapad: en kalenderikon står framför datumet
+- Namn: namnet står i kortet "Kund"
+- E-post: en brevikon står framför adressen
 
 | Etikett | Värde |
 |---|---|
