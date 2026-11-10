@@ -74,7 +74,7 @@ src/
 e2e/           Playwright tests (full flows in a browser)
 ```
 
-Routes: `/tickets` (list), `/tickets/new` (create), `/tickets/:id` (detail).
+Routes: `/tickets` (list), `/tickets/:id` (detail). New tickets are registered in a drawer opened from "Registrera ärende" in the top navigation.
 
 ## Open items
 

@@ -36,6 +36,8 @@ public sealed class ApplicationDbContextTests(ApiFixture fixture) : IntegrationT
             Category = TicketCategory.Other,
             Priority = TicketPriority.Low,
             Status = TicketStatus.New,
+            CustomerName = "Testkund Ett",
+            CustomerEmail = "testkund.ett@example.com",
             CreatedAt = DateTimeOffset.UtcNow,
         });
         await dbContext.SaveChangesAsync();
@@ -58,6 +60,8 @@ public sealed class ApplicationDbContextTests(ApiFixture fixture) : IntegrationT
                 Category = TicketCategory.Other,
                 Priority = TicketPriority.High,
                 Status = TicketStatus.New,
+                CustomerName = "Testkund Två",
+                CustomerEmail = "testkund.tva@example.com",
                 CreatedAt = DateTimeOffset.UtcNow,
             });
             await writeContext.SaveChangesAsync();

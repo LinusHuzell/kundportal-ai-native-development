@@ -28,5 +28,35 @@ export interface Ticket {
   createdAt: string // ISO 8601
 }
 
-export type CreateTicketInput = Omit<Ticket, 'id' | 'status' | 'createdAt'>
+export interface TicketHistoryEvent {
+  type: string
+  occurredAt: string // ISO 8601
+}
+
+export type CreateTicketInput = Omit<Ticket, 'id' | 'ticketNumber' | 'status' | 'createdAt'>
 export type UpdateTicketInput = Partial<CreateTicketInput>
+
+// Swedish display labels, from docs/avgränsningar.md.
+export const CATEGORY_LABELS: Record<TicketCategory, string> = {
+  OrdersDeliveries: 'Beställningar/leveranser',
+  Invoices: 'Fakturor',
+  ReturnsComplaints: 'Returer/reklamation',
+  Other: 'Övrigt',
+}
+
+export const STATUS_LABELS: Record<TicketStatus, string> = {
+  New: 'Nytt',
+  InProgress: 'Pågående',
+  WaitingForCustomer: 'Väntar på kund',
+  Closed: 'Avslutat',
+}
+
+export const TICKET_HISTORY_EVENT_LABELS: Partial<Record<string, string>> = {
+  Created: 'Ärendet registrerades',
+}
+
+export const PRIORITY_LABELS: Record<TicketPriority, string> = {
+  Low: 'Låg',
+  Medium: 'Medel',
+  High: 'Hög',
+}

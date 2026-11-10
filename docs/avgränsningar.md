@@ -64,5 +64,4 @@
 ---
 
 ## Öppna frågor
- * Vem tar ärendehistorik?
  * Längdgränser för rubrik/beskrivning?

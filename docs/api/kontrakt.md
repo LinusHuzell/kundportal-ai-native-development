@@ -35,6 +35,22 @@ Maskinläsbar specifikation: [openapi.json](openapi.json), genererad från backe
 
 `title`, `description`, `category`, `priority`, `customerName`, `customerEmail` (alla obligatoriska).
 
+Alla fält är strängar. `category` och `priority` tas emot som strängar, så att ett saknat eller okänt
+värde ger ett fel på fältet i stället för ett JSON-fel. Tillåtna värden är de i "Enums", med exakt
+skiftläge (`Medium`, inte `medium`). I `openapi.json` visas fälten som `string` (eller `null`) utan
+lista över värden, så listan här gäller.
+
+```json
+{
+  "title": "Paketet har inte kommit",
+  "description": "Beställde för två veckor sedan.",
+  "category": "OrdersDeliveries",
+  "priority": "Medium",
+  "customerName": "Anna Andersson",
+  "customerEmail": "anna@example.com"
+}
+```
+
 ### UpdateTicketRequest
 
 Samma fält som `CreateTicketRequest`, alla valfria (PATCH). Skickade fält valideras med samma regler.
@@ -45,12 +61,31 @@ Samma fält som `CreateTicketRequest`, alla valfria (PATCH). Skickade fält vali
 { "status": "InProgress" }
 ```
 
+`status` är obligatoriskt och tas emot som sträng, så att ett saknat eller okänt värde ger ett fel på
+fältet i stället för ett JSON-fel. Tillåtna värden är `InProgress`, `WaitingForCustomer` och `Closed`,
+med exakt skiftläge. `New` går aldrig att sätta. Samma status som ärendet redan har ger `200` och
+ärendet är oförändrat. I `openapi.json` visas fältet som `string` (eller `null`) utan lista över värden.
+
+### TicketEvent
+
+En händelse i ett ärendes historik. Bara `type` och `occurredAt` returneras.
+
+```json
+{
+  "type": "Created",
+  "occurredAt": "2026-11-10T09:00:00Z"
+}
+```
+
+`type` är för närvarande alltid `Created`. Fler värden läggs till senare. `occurredAt` är serverns tid i UTC.
+
 ## Endpoints
 
 | Metod | Path | Beskrivning | Svar |
 |---|---|---|---|
 | GET | `/tickets` | Lista ärenden (senaste först) | `200` `Ticket[]` |
 | GET | `/tickets/{id}` | Hämta ett ärende | `200` `Ticket`, `404` |
+| GET | `/tickets/{id}/history` | Hämta ett ärendes historik (nyast först) | `200` `TicketEvent[]`, `404` |
 | POST | `/tickets` | Skapa ärende (status sätts till `New`) | `201` `Ticket` + `Location`, `400` |
 | PATCH | `/tickets/{id}` | Redigera ärende | `200` `Ticket`, `400`, `404` |
 | PUT | `/tickets/{id}/status` | Ändra status | `200` `Ticket`, `400`, `404` |
@@ -59,11 +94,52 @@ Ingen DELETE och ingen autentisering (utanför avgränsningen).
 
 ## Validering
 
-- `title`, `description`, `customerName`, `customerEmail`, `category`, `priority` får inte vara tomma eller bara mellanslag.
-- `customerEmail` måste vara ett giltigt e-postformat.
-- `title` och `description` har maxlängd (ej beslutad; förslag 200 respektive 5000 tecken).
-- `category`, `priority` och `status` måste vara ett giltigt enum-värde.
+Regler och felmeddelanden för `POST /tickets` kommer från tabellen Felfall i
+[docs/specs/registrera-ärende.md](../specs/registrera-ärende.md), som är den enda källan.
+
+| Fält | Regel | Felmeddelande |
+|---|---|---|
+| `title` | Saknas, tomt eller bara mellanslag | Rubrik måste fyllas i |
+| `title` | Fler än 200 tecken | Rubrik får vara högst 200 tecken |
+| `description` | Saknas, tomt eller bara mellanslag | Beskrivning måste fyllas i |
+| `description` | Fler än 5000 tecken | Beskrivning får vara högst 5000 tecken |
+| `category` | Saknas, tomt eller okänt värde | Välj en kategori |
+| `priority` | Saknas, tomt eller okänt värde | Välj en prioritet |
+| `customerName` | Saknas, tomt eller bara mellanslag | Namn måste fyllas i |
+| `customerEmail` | Saknas, tomt eller bara mellanslag | E-postadress måste fyllas i |
+| `customerEmail` | Matchar inte `^[^\s@]+@[^\s@]+\.[^\s@]+$` | Ange en giltig e-postadress |
+
+- Värden trimmas inte. Längden räknas på värdet som det skickas, i UTF-16-enheter (som `.length` i JavaScript).
+- E-postregexen är densamma som i frontend. Backend använder `\z` i stället för `$`, eftersom `$` i .NET
+  även matchar före en avslutande radbrytning. Beteendet blir då detsamma som i JavaScript.
+- Stora bokstäver i e-postadressen normaliseras inte.
+- Varje fält får högst ett fel. Alla felaktiga fält rapporteras i samma svar.
 - Vid fel sparas inget.
+- Fel JSON-typ (t.ex. `"title": 123`) eller trasig JSON ger `400` från ramverket, utan `errors`.
+
+Vid sparning sätts `status` till `New` och `createdAt` till serverns tid i UTC. Backend genererar också
+ärendenumret `ticketNumber` i formatet `SR-<år>-<1000 + id>`, där `<år>` är året i `createdAt` (UTC),
+t.ex. `SR-2026-1001` för id 1. Fältet skickas i alla svar med `Ticket` men tas inte emot i anrop.
+
+Regler och felmeddelanden för `PUT /tickets/{id}/status` kommer från tabellen Felfall i
+[docs/specs/visa-ärende-och-ändra-status.md](../specs/visa-ärende-och-ändra-status.md):
+
+| Fält | Regel | Felmeddelande |
+|---|---|---|
+| `status` | `New` | Status kan inte ändras till Nytt |
+| `status` | Saknas, tomt eller okänt värde (även fel skiftläge) | Välj en giltig status |
+Vid sparning sätts `status` till `New` och `createdAt` till serverns tid i UTC. Ärendet får också
+ett internt ärendenummer, `SR-<år>-<1000 + id>`, som inte finns i API:t.
+
+Vid sparning skapas också en `Created`-händelse med samma tidpunkt som `createdAt`. Ärendet och
+händelsen sparas i samma transaktion.
+
+## Historik
+
+`GET /tickets/{id}/history` returnerar ärendets händelser som en lista, nyast först. Vid samma
+tidpunkt kommer den med högst intern id först. Listan är tom (`200 []`) om ärendet saknar händelser,
+till exempel ärenden som skapades innan historiken infördes. Okänt ärende ger `404`. Händelserna
+raderas i databasen när ärendet raderas.
 
 ## Felformat
 
@@ -75,15 +151,10 @@ Valideringsfel (`400`) använder RFC 9457 `application/problem+json` med fältko
   "title": "One or more validation errors occurred.",
   "status": 400,
   "errors": {
-    "title": ["Rubrik är obligatorisk."],
-    "customerEmail": ["Ogiltig e-postadress."]
+    "title": ["Rubrik måste fyllas i"],
+    "customerEmail": ["Ange en giltig e-postadress"]
   }
 }
 ```
 
 `404` returnerar `problem+json` utan `errors`.
-
-## Öppna frågor
-
-- Längdgränser för `title`/`description`.
-- Ärendehistorik: föreslagen `GET /tickets/{id}/history` läggs till när ansvarig är utsedd.

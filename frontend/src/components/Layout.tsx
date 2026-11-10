@@ -1,40 +1,81 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import CreateTicketDrawer from '../features/create-ticket/CreateTicketDrawer'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `relative flex h-full items-center px-3 text-[13px] transition-colors max-sm:px-2 max-sm:text-[11px] ${
-    isActive
-      ? "text-white after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:bg-teal after:content-[''] max-sm:after:inset-x-2"
-      : 'text-copy-muted hover:text-white'
+  `rounded px-3 py-1.5 text-sm font-medium ${
+    isActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-200'
   }`
 
+const CONFIRMATION = 'Ärendet har registrerats.'
+const CONFIRMATION_MS = 5000 // AK-9
+
 export default function Layout() {
+  const openButtonRef = useRef<HTMLButtonElement>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [confirmation, setConfirmation] = useState('')
+
+  useEffect(() => {
+    if (!confirmation) return
+    const timer = setTimeout(() => setConfirmation(''), CONFIRMATION_MS)
+    return () => clearTimeout(timer)
+  }, [confirmation])
+
+  const openDrawer = () => {
+    setConfirmation('')
+    setDrawerOpen(true)
+  }
+
+  const handleDrawerClosed = () => {
+    setDrawerOpen(false)
+    openButtonRef.current?.focus()
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-portal via-[#101f32] to-[#12253a] font-sans text-white antialiased">
-      <header className="h-[60px] border-b border-line bg-portal/95">
-        <div className="mx-auto flex h-full w-full max-w-[1200px] items-center justify-between px-6 max-sm:px-3">
-          <Link
-            to="/tickets"
-            className="truncate text-sm font-semibold text-white max-sm:max-w-[150px] max-sm:text-xs"
-            aria-label="Customer Service Portal home"
-          >
-            Customer Service <span className="font-normal text-copy-muted">Portal</span>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
+          <Link to="/tickets" className="text-lg font-semibold">
+            Customer Service Portal
           </Link>
-          <nav className="flex h-full items-center gap-2 max-sm:gap-1" aria-label="Main navigation">
+          <nav className="flex items-center gap-2">
             <NavLink to="/tickets" end className={navClass}>
               Tickets
             </NavLink>
-            <NavLink
-              to="/tickets/new"
-              className="flex min-h-[34px] items-center rounded border border-teal/55 bg-teal px-3 text-xs font-bold text-[#08201f] transition-colors hover:bg-[#48c5b9] max-sm:min-h-8 max-sm:px-2 max-sm:text-[10px]"
+            <button
+              ref={openButtonRef}
+              type="button"
+              aria-haspopup="dialog"
+              onClick={openDrawer}
+              className="rounded bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
             >
-              New ticket
-            </NavLink>
+              Registrera ärende
+            </button>
           </nav>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[1200px] px-6 py-8 pb-14 max-sm:px-3 max-sm:pt-6">
+      <main className="mx-auto max-w-5xl px-6 py-8">
         <Outlet />
       </main>
+
+      {drawerOpen && (
+        <CreateTicketDrawer
+          onClose={handleDrawerClosed}
+          onSaved={() => setConfirmation(CONFIRMATION)}
+        />
+      )}
+
+      {/* Always rendered so screen readers announce the text when it is set (AK-9). */}
+      <p
+        role="status"
+        className={
+          confirmation
+            ? 'fixed right-6 bottom-6 rounded-md bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-lg'
+            : 'sr-only'
+        }
+      >
+        {confirmation}
+      </p>
     </div>
   )
 }

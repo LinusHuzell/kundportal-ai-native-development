@@ -1,3 +1,5 @@
+using CustomerService.Api.Data;
+
 namespace CustomerService.Api.Features.Tickets;
 
 public enum TicketStatus { New, InProgress, WaitingForCustomer, Closed }
@@ -16,4 +18,17 @@ public record TicketResponse(
     TicketStatus Status,
     string CustomerName,
     string CustomerEmail,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt)
+{
+    public static TicketResponse From(Ticket ticket) => new(
+        ticket.Id,
+        ticket.TicketNumber,
+        ticket.Title,
+        ticket.Description,
+        ticket.Category,
+        ticket.Priority,
+        ticket.Status,
+        ticket.CustomerName,
+        ticket.CustomerEmail,
+        ticket.CreatedAt);
+}
