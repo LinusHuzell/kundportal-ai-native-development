@@ -45,6 +45,7 @@ export default function Layout() {
             <button
               ref={openButtonRef}
               type="button"
+              aria-haspopup="dialog"
               onClick={openDrawer}
               className="rounded bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
             >

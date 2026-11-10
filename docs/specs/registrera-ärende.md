@@ -27,6 +27,9 @@ när applikationen startas om.
 - Knappen "Registrera ärende" ligger i navigeringen överst, så att ärenden kan registreras
   från alla sidor. Drawern öppnas över den sida som visas. Avviker från Figma-mocken
   (gruppens designunderlag), där knappen finns på listsidan. Beslutat av Carolina.
+- Knappen "Registrera ärende" har `aria-haspopup="dialog"`. Inget WCAG-krav. Lagt till av
+  Carolina efter kontroll med VoiceOver: knappen lästes bara som "knapp" och
+  förvarnade inte om dialogen.
 
 ## Felfall
 Gäller både frontend och backend. Detta är den enda källan för
@@ -110,7 +113,8 @@ backend. Stora bokstäver normaliseras inte.
 **AK-7**
 - Given: Handläggaren är på ärendelistan
 - When: Hen väljer "Registrera ärende"
-- Then: Formuläret öppnas i en drawer, och listan syns kvar bakom
+- Then: Formuläret öppnas i en drawer, och listan syns kvar bakom. Knappen talar om för
+  skärmläsare att den öppnar en dialog (`aria-haspopup="dialog"`).
 
 **AK-8**
 - Given: Drawern är öppen

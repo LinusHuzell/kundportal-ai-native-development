@@ -77,6 +77,13 @@ test('AK-7: Registrera ärende opens the form in a drawer over the ticket list',
   await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible()
 })
 
+// Screen readers announce that the button opens a dialog before it is pressed.
+test('AK-7: the Registrera ärende button says that it opens a dialog', async ({ page }) => {
+  await expect(
+    page.getByRole('button', { name: 'Registrera ärende', exact: true }),
+  ).toHaveAttribute('aria-haspopup', 'dialog')
+})
+
 test('AK-2: priority starts as Medel and is saved as Medium', async ({ page }) => {
   const { dialog } = await openDrawer(page)
   const { priority } = fields(dialog)
