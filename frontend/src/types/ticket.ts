@@ -28,6 +28,11 @@ export interface Ticket {
   createdAt: string // ISO 8601
 }
 
+export interface TicketHistoryEvent {
+  type: string
+  occurredAt: string // ISO 8601
+}
+
 export type CreateTicketInput = Omit<Ticket, 'id' | 'ticketNumber' | 'status' | 'createdAt'>
 export type UpdateTicketInput = Partial<CreateTicketInput>
 
@@ -44,6 +49,10 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
   InProgress: 'Pågående',
   WaitingForCustomer: 'Väntar på kund',
   Closed: 'Avslutat',
+}
+
+export const TICKET_HISTORY_EVENT_LABELS: Partial<Record<string, string>> = {
+  Created: 'Ärendet registrerades',
 }
 
 export const PRIORITY_LABELS: Record<TicketPriority, string> = {

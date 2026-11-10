@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError, api } from '../api/client'
+import TicketHistory from '../features/ticket-detail/TicketHistory'
 import StatusForm from '../features/ticket-detail/StatusForm'
 import { formatCreatedAt } from '../features/ticket-detail/formatCreatedAt'
 import { parseTicketId } from '../features/ticket-detail/parseTicketId'
@@ -141,6 +142,7 @@ function TicketDetails({ ticket, onSaved }: { ticket: Ticket; onSaved: (ticket: 
             </div>
           </section>
         </div>
+        <TicketHistory ticketId={ticket.id} />
       </div>
     </>
   )

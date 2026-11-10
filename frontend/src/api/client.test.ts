@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { CreateTicketInput, Ticket } from '../types/ticket'
+import type { CreateTicketInput, Ticket, TicketHistoryEvent } from '../types/ticket'
 import { API_BASE_URL, ApiError, api, type ProblemDetails } from './client'
 
 const input: CreateTicketInput = {
@@ -137,6 +137,40 @@ describe('api.getTicket', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
 
     const error = await api.getTicket(1).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 0 })
+  })
+})
+
+describe('api.getTicketHistory', () => {
+  const history: TicketHistoryEvent[] = [
+    { type: 'Created', occurredAt: '2026-11-09T09:30:00Z' },
+  ]
+
+  it('gets /tickets/{id}/history and returns the events', async () => {
+    const fetchMock = respond(200, history)
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(api.getTicketHistory(1)).resolves.toEqual(history)
+
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/tickets/1/history`, { method: 'GET' })
+  })
+
+  it.each([404, 500])('turns a %i into an error with the response status', async (status) => {
+    const problem: ProblemDetails = { title: 'Request failed', status }
+    vi.stubGlobal('fetch', respond(status, problem, 'application/problem+json'))
+
+    const error = await api.getTicketHistory(1).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status })
+  })
+
+  it('turns a network failure into an error with status 0', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    const error = await api.getTicketHistory(1).catch((e: unknown) => e)
 
     expect(error).toBeInstanceOf(ApiError)
     expect(error).toMatchObject({ status: 0 })
