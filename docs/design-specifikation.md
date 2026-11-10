@@ -96,7 +96,7 @@ Turkos.
 
 - All vanlig text ska ha minst 4,5:1 i kontrast mot sin bakgrund; stor text minst 3:1.
 - Textfärger ska väljas efter den faktiska bakgrunden. Den nedtonade textfärgen får inte användas där den inte når kontrastkravet.
-- Ljus text används på de mörkblå ytorna. Mörk text används bara på ljusa ytor och formulärkontroller.
+- Ljus text används på de mörkblå ytorna. Text i formulärkontroller ska ha tillräcklig kontrast mot kontrollens bakgrund.
 
 ---
 
