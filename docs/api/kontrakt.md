@@ -53,7 +53,21 @@ lista över värden, så listan här gäller.
 
 ### UpdateTicketRequest
 
-Samma fält som `CreateTicketRequest`, alla valfria (PATCH). Skickade fält valideras med samma regler.
+Samma fält som `CreateTicketRequest`, alla valfria (PATCH). Skickade fält valideras med samma regler
+och meddelanden (se "Validering"). Regler från [docs/specs/redigera-ärende.md](../specs/redigera-ärende.md):
+
+- Ett fält som saknas eller är `null` ändras inte. En tom sträng eller bara mellanslag är ett fel,
+  inte "ändra inte".
+- `category` och `priority` tas emot som strängar, med exakt skiftläge, som i `CreateTicketRequest`.
+  Ett okänt värde ger `400` på fältet.
+- `status`, `ticketNumber`, `id` och `createdAt` kan inte ändras här. Skickas de ignoreras de.
+- Ett anrop utan fält (`{}`) ger `200` med ärendet oförändrat.
+- Vid fel sparas inget, inte heller de giltiga fälten i samma anrop.
+- Redigering skapar ingen händelse i historiken.
+
+```json
+{ "title": "Paketet kom fram trasigt", "priority": "High" }
+```
 
 ### UpdateStatusRequest
 
@@ -94,7 +108,7 @@ Ingen DELETE och ingen autentisering (utanför avgränsningen).
 
 ## Validering
 
-Regler och felmeddelanden för `POST /tickets` kommer från tabellen Felfall i
+Regler och felmeddelanden för `POST /tickets` och `PATCH /tickets/{id}` kommer från tabellen Felfall i
 [docs/specs/registrera-ärende.md](../specs/registrera-ärende.md), som är den enda källan.
 
 | Fält | Regel | Felmeddelande |
@@ -116,6 +130,8 @@ Regler och felmeddelanden för `POST /tickets` kommer från tabellen Felfall i
 - Varje fält får högst ett fel. Alla felaktiga fält rapporteras i samma svar.
 - Vid fel sparas inget.
 - Fel JSON-typ (t.ex. `"title": 123`) eller trasig JSON ger `400` från ramverket, utan `errors`.
+- `PATCH /tickets/{id}` validerar innan ärendet slås upp, som `PUT /tickets/{id}/status`: ett ogiltigt
+  anrop ger `400` även om id:t inte finns.
 
 Vid sparning sätts `status` till `New` och `createdAt` till serverns tid i UTC. Backend genererar också
 ärendenumret `ticketNumber` i formatet `SR-<år>-<1000 + id>`, där `<år>` är året i `createdAt` (UTC),
@@ -128,8 +144,6 @@ Regler och felmeddelanden för `PUT /tickets/{id}/status` kommer från tabellen 
 |---|---|---|
 | `status` | `New` | Status kan inte ändras till Nytt |
 | `status` | Saknas, tomt eller okänt värde (även fel skiftläge) | Välj en giltig status |
-Vid sparning sätts `status` till `New` och `createdAt` till serverns tid i UTC. Ärendet får också
-ett internt ärendenummer, `SR-<år>-<1000 + id>`, som inte finns i API:t.
 
 Vid sparning skapas också en `Created`-händelse med samma tidpunkt som `createdAt`. Ärendet och
 händelsen sparas i samma transaktion.

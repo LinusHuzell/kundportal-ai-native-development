@@ -1,6 +1,6 @@
 # Customer Service API
 
-ASP.NET Core API for the Customer Service Portal. The ticket endpoints are defined according to [docs/api/kontrakt.md](../docs/api/kontrakt.md), but their handlers are stubs that return `501 Not Implemented` until persistence is added.
+ASP.NET Core API for the Customer Service Portal. The ticket endpoints are defined according to [docs/api/kontrakt.md](../docs/api/kontrakt.md). All handlers are implemented and store data in Postgres through EF Core.
 
 ## Requirements
 
