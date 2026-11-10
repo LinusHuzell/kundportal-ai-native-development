@@ -2,7 +2,7 @@
 
 ## Designfilosofi
 
-Contractor Service Portal ska kännas som en modern skandinavisk B2B-applikation.
+ Ska kännas som en modern skandinavisk B2B-applikation.
 
 ### Nyckelord
 
@@ -133,9 +133,7 @@ Sidan består av tre huvudsektioner:
 
 - Företagslogotyp
 - Företagsnamn
-- Räknare för aktiva ärenden
 - Knapp för att skapa arbetsorder
-- Användaravatar
 
 ### Bakgrund
 
@@ -157,8 +155,6 @@ Sidan består av tre huvudsektioner:
 
 ### Innehåller
 
-- Sökruta
-- Filtermeny (Dropdown)
 - Ärendelista
 
 ### Beteende
@@ -187,7 +183,6 @@ Varje ärende ska visa:
 - Ärendenummer
 - Titel
 - Kundnamn
-- Kundföretag
 - Prioritetsbadge
 - Statusbadge
 - Skapandedatum
@@ -229,10 +224,6 @@ Används för att filtrera:
 - Ärendestatusar
 
 ---
-
-# Statistikwidget
-
-Placeras ovanför huvudinnehållet.
 
 ### Visar sammanfattningar för
 
