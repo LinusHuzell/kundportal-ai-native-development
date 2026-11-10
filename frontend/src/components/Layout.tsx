@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import CreateTicketDrawer from '../features/create-ticket/CreateTicketDrawer'
-
-const navClass = ({ isActive }: { isActive: boolean }) =>
-  `rounded px-3 py-1.5 text-sm font-medium ${
-    isActive ? 'bg-teal text-portal' : 'text-copy-muted hover:bg-panel'
-  }`
 
 const CONFIRMATION = 'Ärendet har registrerats.'
 const CONFIRMATION_MS = 5000 // AK-9
@@ -39,9 +34,6 @@ export default function Layout() {
             Kundserviceportal
           </Link>
           <nav className="flex items-center gap-2">
-            <NavLink to="/tickets" end className={navClass}>
-              Ärenden
-            </NavLink>
             <button
               ref={openButtonRef}
               type="button"
