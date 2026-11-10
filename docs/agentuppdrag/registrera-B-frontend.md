@@ -529,8 +529,95 @@ utanför drawern".
 - **Osäkerhet:** ett klick utanför när ett anrop pågår stänger drawern, precis som Esc. Om anropet sedan lyckas
   visas toasten (osäkerhet 6).
 
-Inget är committat, pushat eller lagt i en pull request.
+### Tillägg: fynd från Carolinas VoiceOver-test
+
+Carolina hittade två fel med VoiceOver:
+
+1. Knappen sa inte att den öppnar en dialog.
+2. Sidans språk var fel. `index.html` hade `lang="en"`, så VoiceOver läste den svenska texten med engelsk röst.
+
+`index.html` finns inte i listan över filer jag får ändra. Carolina bad om ändringen uttryckligen.
+
+- **Kod:**
+  - `aria-haspopup="dialog"` på knappen "Registrera ärende" (`Layout.tsx`).
+  - `<html lang="sv">` i `frontend/index.html`.
+- **Tester, 2 nya:**
+  - `e2e/create-ticket.spec.ts`: `AK-7: the Registrera ärende button says that it opens a dialog`
+    (`toHaveAttribute('aria-haspopup', 'dialog')`).
+  - `e2e/smoke.spec.ts`: `the page language is Swedish` (`toHaveAttribute('lang', 'sv')` på `html`).
+- **Rött först:** 2 failed, 17 passed. `Expected: "dialog", Received: ""` och `Expected: "sv", Received: "en"`.
+- **Sista körningen:** lint och typecheck utan fel. `npm test` 36 passed. Build ok. Mockat 3 passed. Compose-sviten
+  `19 passed`, exit 0.
+- **Öppet:**
+  - Inget av kraven står i specen. Förslag: en rad under "Ingår" om att sidan har `lang="sv"` och att knappen
+    anger att den öppnar en dialog.
+  - Hur VoiceOver läser upp `aria-haspopup="dialog"` varierar mellan versioner. Det kontrolleras bara manuellt.
+  - `<title>` och vissa texter i Layout är fortfarande på engelska (fråga 12).
+
 
 ## 5. Min granskning
 
-_Carolina skriver här: vad jag accepterade, ändrade eller avvisade, och varför._
+### Hur jag granskade
+
+- Jag svarade på agentens frågor vid kontrollpunkt 1 och godkände planen.
+- Jag läste den röda körningen och svarade på frågorna 18 och 19 vid kontrollpunkt 2.
+- Efter kontrollpunkt 3 bad jag om att drawern också ska stängas vid klick utanför.
+- Jag läste `CreateTicketDrawer.tsx`.
+- Jag testade drawern med VoiceOver och med tangentbord.
+  - Felmeddelandena läses upp som de ska.
+  - Sidan har `lang="en"`, men texten är på svenska. VoiceOver läser då svenskan med engelsk röst (WCAG 3.1.1, nivå A).
+  - Knappen "Registrera ärende" säger inte att den öppnar en dialog. När drawern öppnas flyttas fokus in och VoiceOver säger "dialog", så användaren får veta det då.
+
+### Accepterat, ändrat, avvisat
+
+| Förslag | Beslut | Varför |
+|---|---|---|
+| AK-1 och AK-2 kontrolleras på POST-svaret, eftersom `GET` svarar 501 | Accepterat | Sparningen testas redan i backend med en ny `DbContext`, och sabotage 5 där visade att testet fångar utebliven sparning. Teststrategin säger att ett fel testas på den billigaste nivån som kan fånga det. |
+| Töm formuläret när drawern stängs och efter sparning | Accepterat, och lagt i AK-8 och AK-9 | Drawern ska alltid öppnas likadant, med Medel förvalt. |
+| Fokus till första fältet med fel | Accepterat, och lagt i specen som AK-11 | Utan fokusflytt märker en skärmläsaranvändare inte att formuläret har fel. |
+| Spärr mot dubbelklick på "Spara ärende" | Accepterat, och lagt i specen som AK-12 | Ett dubbelklick kunde skapa två ärenden. |
+| Bekräftelsen visas tills drawern öppnas igen | Ändrat | Jag gjorde den till en toast som visas i 5 sekunder. Det står i AK-9. |
+| Ta bort smoke-test 2 | Ändrat | Testet skrevs om så att det passar navigeringen med knappen. |
+
+
+### Vad jag ifrågasatte och vad kontrollerna visade
+
+- **Fokustesterna fångade inte felet.** När agenten tog bort vår `focus()` föll inget test, eftersom native `<dialog>` själv lämnar tillbaka fokus. Testerna skärptes så att de väntar tills drawern är borta. Efter det föll alla tre när fokus hamnade fel.
+- **Min egen kontroll hittade ett fel som testerna missade.** Inget test kontrollerade sidans språk, så `lang="en"` gick igenom alla körningar. VoiceOver avslöjade det direkt. Jag lade till ett test för `lang="sv"`, såg det falla före ändringen och gå igenom efter. Se "Kontroll av sidans språk" nedan.
+- **Knappen och dialogen.** Före ändringen läste VoiceOver bara "Registrera ärende, button". Det fanns ingen förvarning om att en dialog öppnas. Det är inget WCAG-krav, och det stod inte i min spec. Jag lade ändå till `aria-haspopup="dialog"` för att det ska bli tydligare. Efter ändringen läser VoiceOver: "Registrera ärende, dialog pop-up, button". Ett Playwright-test kontrollerar attributet.
+- **AK-7 visar inte att dialogen är modal.** Testet går igenom även med `show()`. Fokusfällan och den inaktiva bakgrunden kontrolleras därför manuellt med tangentbord och VoiceOver.
+
+### Begränsningar som är kvar
+
+- Inget test går hela vägen från formuläret till databasen. När `GET` finns kan e2e-testet läsa tillbaka ärendet.
+- Ett 400-svar från servern till fälten är testat i klienten men inte genom drawern. Ett mockat valideringsfel är inte tillåtet enligt teststrategin.
+- VoiceOver läser upp toasten "Ärendet har registrerats." Det har jag kontrollerat manuellt. Playwright kontrollerar bara att texten finns i en `role="status"`-region, inte att en skärmläsare faktiskt läser upp den. Uppläsningen går därför bara att kontrollera för hand.
+- Engelska texter finns kvar i Layout ("Customer Service Portal", "Tickets"). När sidan får `lang="sv"` läses de med svensk röst. Gruppen behöver översätta dem.
+- Om ett anrop lyckas efter att drawern har stängts visas toasten ändå. Det är inte testat.
+
+### Kontroll av sidans språk
+
+Test: `the page language is Swedish` i `frontend/e2e/smoke.spec.ts`.
+Kommando: `docker compose -f compose.test.yaml run --build --rm e2e`.
+
+Före rättningen (`<html lang="en">`):
+```text
+[fullstack] › e2e/smoke.spec.ts:11:1 › the page language is Swedish
+
+Error: expect(locator).toHaveAttribute(expected) failed
+Locator:  locator('html')
+Expected: "sv"
+Received: "en"
+
+1 failed
+18 passed (7.7s)
+```
+
+Efter rättningen (`<html lang="sv">`):
+```text
+✓ [fullstack] › e2e/smoke.spec.ts:11:1 › the page language is Swedish (429ms)
+
+19 passed (6.0s)
+```
+
+Testet föll av rätt anledning, och bara det testet föll. Efter rättningen gick alla 19 igenom.

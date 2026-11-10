@@ -395,8 +395,46 @@ Backendloggen visar `Applying migration '20261031093808_InitialCreate'` och
 `__EFMigrationsHistory`. EF loggar den när tabellen inte finns än i en ny databas. Den stoppar inte
 migreringen. Sviten innehåller bara två smoke-tester. Registreringsflödet har inget E2E-test än (uppdrag B).
 Stacken stoppades med `docker compose -f compose.test.yaml down`.
-- Inget är committat.
+
 
 ## 5. Min granskning
 
-_Carolina skriver här: vad jag accepterade, ändrade eller avvisade, och varför._
+
+### Hur jag granskade
+
+- Jag läste planen och svarade på agentens frågor vid kontrollpunkt 1.
+- Jag läste den röda körningen vid kontrollpunkt 2 innan jag sa "go ahead".
+- Jag läste slutrapporten och svarade på avvikelse 1 vid kontrollpunkt 3.
+- Jag läste diffen i `CreateTicket.cs` och i testfilerna.
+- Körde `dotnet test CustomerService.slnx` själv i terminalen och läste utskriften. Resultatet var detsamma som agentens slutkörning:
+  ```text
+  Test summary: total: 68, failed: 0, succeeded: 68, skipped: 0, duration: 4,6s
+  Build succeeded in 5,5s
+  ```
+
+### Accepterat, ändrat, avvisat
+
+| Förslag | Beslut | Varför |
+|---|---|---|
+| `\z` i stället för `$` i e-postregexen, plus ett test för avslutande radbrytning | Accepterat | I .NET godtar `$` en radbrytning i slutet. Då hade en ogiltig adress gått igenom. |
+| Årtalet i ärendenumret från `CreatedAt` i UTC | Accepterat | Samma årtal oavsett tidszon. |
+| `[AllowedValues]` så att kontraktet visar tillåtna värden | Ändrat | Generatorn skrev inte ut attributet. Värdena står i `kontrakt.md` i stället, som vi kommit överens om. |
+| Regex som `pattern` i kontraktet | Avvisat | Inte det vi kom överens om, och `kontrakt.md` räcker. |
+| `string?` i koden, alltså `null` i `openapi.json` | Accepterat | Ett saknat fält kommer fram som `null` och ger 400. Typerna stämmer med verkligheten. |
+| `Assert.Single` i stället för `SingleAsync` | Accepterat | Testet faller nu på ett påstående i stället för ett undantag. |
+
+### Vad jag ifrågasatte
+
+Jag frågade om backend kunde ta emot kategori och prioritet utan kontroll och låta frontend validera. Agenten avrådde:
+- Felfall gäller både frontend och backend.
+- AK-5 kräver 400 från API:t.
+- API:t kan anropas direkt, utan formuläret.
+
+Jag höll med och behöll valideringen i backend. Det visade mig att specen styr även när en genväg verkar enklare.
+
+### Begränsningar som är kvar
+
+- AK-6 är bara delvis visat. Testet startar en ny app-instans mot samma databas. Det är inte en omstart av Docker-stacken.
+- `Location` pekar på `GET /api/tickets/{id}`, som fortfarande svarar 501.
+- Utvecklingsdatabaser som redan har seedärenden får tomma kundfält efter migrationen.
+
