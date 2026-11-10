@@ -144,3 +144,173 @@ Never run plain npx playwright test.
 | Mockat bara för långsamt svar och fel | `AGENTS.md`: mocka aldrig det som den riktiga stacken kan ge, som 404 eller "Nytt". |
 | Två sabotage | De två kontrollerna som bara frontenden gör: att "Nytt" inte skickas och att inga dubbla anrop skickas. |
 | Verkliga körresultat | AI:s besked räcker inte. Kontrollerna måste vara körda. |
+
+## 2. Plan
+
+Skriven av agenten i Stage 0. Inga andra filer är ändrade.
+
+### Läst
+
+Specen, `AGENTS.md`, `docs/teststrategi.md`, `docs/api/kontrakt.md`, planen i
+`visa-ärende-A-backend.md` som förebild, och i `frontend/`: `src/api/client.ts` med test,
+`src/types/ticket.ts` med test, `TicketDetailPage.tsx`, `App.tsx`, `Layout.tsx`,
+`features/create-ticket/*`, `e2e/*.spec.ts`, `e2e-mocked/*.spec.ts`, `playwright.config.ts`,
+`vite.config.ts`, `tsconfig.*.json`, `compose.test.yaml` och `Dockerfile.e2e`. Kontrollerat i Node 24
+att `Intl.DateTimeFormat('sv-SE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Stockholm' })`
+ger "10 nov. 2026 14:30" för `2026-11-10T13:30:00Z`.
+
+### Steg
+
+**Steg 1. Skal så att testerna kompilerar (inga AK)**
+- `src/types/ticket.ts`: `STATUS_LABELS: Record<TicketStatus, string>` med platshållarvärden (tomma strängar).
+- `src/features/ticket-detail/formatCreatedAt.ts`: `formatCreatedAt(iso: string, timeZone?: string): string`
+  som returnerar `''`.
+- `src/features/ticket-detail/parseTicketId.ts`: `parseTicketId(value: string | undefined): number | undefined`
+  som returnerar `undefined` (se fråga 4).
+- `api.getTicket` och `api.updateTicketStatus` är redan stubbar som kastar `ApiError` 501, så de
+  rörs inte än. Sidan är redan en platshållare.
+- Tester: inga. Steget finns för att testerna i steg 2–4 ska falla på påståenden, inte på kompilering.
+
+**Steg 2. Enhetstester, Vitest (AK-2, AK-3, AK-8, AK-12)**
+- `src/types/ticket.test.ts` (nytt test): `STATUS_LABELS` är exakt Nytt, Pågående, Väntar på kund, Avslutat.
+- `src/features/ticket-detail/formatCreatedAt.test.ts` (AK-2): `2026-11-10T13:30:00Z` med
+  `Europe/Stockholm` ger "10 nov. 2026 14:30". Ett andra test med `UTC` ger "10 nov. 2026 13:30", så att
+  tidszonen bevisligen används.
+- `src/features/ticket-detail/parseTicketId.test.ts` (intern logik bakom AK-3): `"42"` ger 42, och
+  ogiltiga värden ger `undefined`. Ogiltiga fall i ett `it.each` om du godkänner det (fråga 4).
+- `src/api/client.test.ts` (nya tester, samma mönster som `createTicket`):
+  - `getTicket` hämtar `${API_BASE_URL}/tickets/7` och returnerar ärendet.
+  - `getTicket`: 404 som problem+json ger `ApiError` med `status: 404`.
+  - `getTicket`: nätverksfel ger `ApiError` med `status: 0`.
+  - `updateTicketStatus` skickar `PUT` till `/tickets/7/status` med `Content-Type: application/json`
+    och `{"status":"Closed"}`, och returnerar ärendet.
+  - `updateTicketStatus`: 404 ger `ApiError` 404, nätverksfel ger `ApiError` 0.
+
+**Steg 3. End-to-end mot hela stacken (AK-1, AK-3, AK-6, AK-7, AK-8, AK-9, AK-10)**
+- Ny fil `e2e/ticket-detail.spec.ts`. Hjälpfunktioner: `createTicket(request, overrides)` via
+  `POST /api/tickets` med unik rubrik (som `uniqueTitle` i `create-ticket.spec.ts`), `setStatus(request, id, status)`
+  via `PUT` för förberedelser, `detail(page, label)` som hittar ett värde i `<dl>` via roll (fråga 6),
+  och `recordStatusRequests(page)` som spelar in `PUT .../status`.
+- Live-regioner söks inom `page.getByRole('main')`, eftersom `Layout` alltid har en tom `role="status"`.
+- AK-1: skapa ärende, öppna `/tickets/{id}`. `<h1>` är rubriken. Ärendenummer = id, Status = "Nytt",
+  Prioritet och Kategori som etiketter, Skapad = `formatCreatedAt(createdAt)` importerad från `src`
+  med `test.use({ timezoneId: 'Europe/Stockholm' })`, Namn, E-post, Beskrivning.
+- AK-3: två tester. `/tickets/999999999` (finns inte) och `/tickets/abc` visar "Ärendet hittades inte".
+  För `abc` kontrolleras också att inget `GET /api/tickets/...` skickades (beslut 2).
+- AK-6: från ett visat ärende, och från "hittades inte", leder "Tillbaka till ärendelistan" till
+  `/tickets` med rubriken "Tickets". Laddning och laddfel, se fråga 3.
+- AK-7: två tester. Nytt ärende: comboboxen "Status" har värdet `New`, fyra alternativ i ordningen
+  Nytt, Pågående, Väntar på kund, Avslutat, och "Nytt" är inaktiverat. Ärende satt till
+  `WaitingForCustomer` via API: det alternativet är valt och "Nytt" är inte valt.
+- AK-8: välj "Väntar på kund", "Spara status". Status i uppgifterna = "Väntar på kund", en `status`-region
+  har "Status ändrad till Väntar på kund", och knappen "Spara status" har fokus.
+- AK-9: ändra status i gränssnittet, vänta på svaret, ladda om. Status visar den nya statusen och listan
+  har den förvald.
+- AK-10: nytt ärende, "Spara status" utan att välja. Comboboxen har `aria-invalid="true"` och
+  tillgänglig beskrivning "Välj en ny status", och inget `PUT` spelades in.
+
+**Steg 4. End-to-end med mockat API (AK-4, AK-5, AK-11, AK-12)**
+- Nya filer, alla med `Ticket`- och `ProblemDetails`-typer från klienten och fel som problem+json.
+  Både `GET` och `PUT` mockas, eftersom den mockade sviten inte har någon backend.
+  - `e2e-mocked/ticket-detail-load.spec.ts`:
+    - AK-4: `GET` hålls kvar. "Laddar ärende…" i `role="status"`, och länken tillbaka syns. Svaret
+      släpps, och rubriken visas.
+    - AK-5: `GET` svarar 500, och sedan ett test med `route.abort('failed')`. Båda visar "Ärendet kunde
+      inte hämtas. Försök igen senare." i `role="alert"`, och länken tillbaka syns.
+  - `e2e-mocked/ticket-detail-save.spec.ts`:
+    - AK-11: `PUT` hålls kvar. Efter första klicket har knappen namnet "Sparar…" och är inaktiverad.
+      Ett nytt försök (Enter på knappen som har fokus, fråga 1) ger inget andra `PUT` inom en sekund,
+      samma teknik som `create-ticket-pending.spec.ts`. Svaret släpps, och bekräftelsen visas.
+    - AK-12: ärende med `InProgress`, välj "Avslutat", `PUT` svarar 500, och ett test till med
+      nätverksfel. "Statusen kunde inte sparas. Försök igen." i `role="alert"`, comboboxen har kvar
+      `Closed`, och Status i uppgifterna är fortfarande "Pågående".
+
+**Kontrollpunkt 2:** kör `npm test`, `npm run test:e2e:mocked` och hela stacken via
+`compose.test.yaml`, och visa verklig utskrift. Allt nytt ska falla på påståenden.
+
+**Steg 5. Etiketter, datum, id och klient**
+- `STATUS_LABELS` med riktiga värden. `formatCreatedAt` med `Intl.DateTimeFormat('sv-SE', { dateStyle: 'medium',
+  timeStyle: 'short', timeZone })`. `parseTicketId` godtar bara `^[1-9]\d*$` upp till 2147483647.
+- `getTicket(id)`: `request<Ticket>(`/tickets/${id}`, { method: 'GET' })`. `updateTicketStatus(id, status)`:
+  `PUT` med JSON-kropp `{ status }`, samma form som `createTicket`.
+
+**Steg 6. Detaljsidan (AK-1, AK-3–AK-6)**
+- `src/pages/TicketDetailPage.tsx`. `useParams` → `parseTicketId`. Ogiltigt id ger tillståndet
+  "not-found" utan anrop. Annars `api.getTicket` i en `useEffect` som ignorerar svar som kommer efter att
+  id:t har bytts. `ApiError` med status 404 ger "not-found", alla andra fel ger "error".
+- Alltid renderat: länken "Tillbaka till ärendelistan" (`Link` till `/tickets`), en `role="status"` för
+  "Laddar ärende…" och en `role="alert"` för laddfelet. Regionerna ligger utanför den del som byts mellan
+  tillstånden, så att de finns innan texten sätts (beslut 13, fråga 2).
+- Visat ärende: `<h1>` med rubriken, `<dl>` med etiketterna i Visning (Status, Prioritet och Kategori via
+  `*_LABELS`, Skapad via `formatCreatedAt` utan tidszon, alltså webbläsarens), och statusformuläret.
+  När formuläret har sparat ersätts ärendet i sidans state av svaret.
+- Tailwind-klasser och fokusringar som i `CreateTicketDrawer`.
+
+**Steg 7. Statusformuläret (AK-7, AK-8, AK-10, AK-11, AK-12)**
+- `src/features/ticket-detail/StatusForm.tsx`, props `ticket` och `onSaved(ticket)`.
+- `<label>` "Status" kopplad till en `<select>` med `TICKET_STATUSES` i ordning. "Nytt" har `disabled`.
+  Startvärde är ärendets status.
+- Submit: om ett sparande pågår (`savingRef`), gör inget. Rensa bekräftelse och fel. Om `New` är valt:
+  visa "Välj en ny status" under listan, `aria-invalid` och `aria-describedby` på listan, inget anrop
+  (fråga 5). Annars `api.updateTicketStatus`. Vid lyckat svar: `onSaved(svaret)` och
+  "Status ändrad till <etikett>" i formulärets `role="status"`. Vid fel: "Statusen kunde inte sparas.
+  Försök igen." i formulärets `role="alert"`, valt värde ligger kvar.
+- Under sparning: knappen visar "Sparar…" och är inaktiverad med `aria-disabled="true"` i stället för
+  `disabled`, så att fokus stannar på knappen (fråga 1).
+- Båda live-regionerna renderas alltid, tomma tills de får text (beslut 13).
+
+**Steg 8. Sabotagekontroll**
+- (a) Ta bort kontrollen av `New` före sparning. Väntat: AK-10 i `e2e/` faller, eftersom ett `PUT` med
+  `New` skickas (backend svarar 400) och "Välj en ny status" inte visas.
+- (b) Ta bort spärren mot ett andra sparande (`savingRef`-kontrollen). Väntat: AK-11 faller på att ett
+  andra `PUT` skickas. Se fråga 1 om varför det bara gäller med `aria-disabled`.
+- Rapportera vilka tester som föll och varför, och återställ koden efter varje sabotage.
+
+**Steg 9. Slutkörning och rapport**
+- `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e:mocked` och hela
+  stacken via `compose.test.yaml` (sedan `down`). Verklig utskrift och rapport i avsnitt 4
+  (kontrollpunkt 3).
+
+### Oklarheter och skillnader mellan spec och kod
+
+1. **Beslut 8 och 9 krockar med `disabled`.** En knapp som har fokus och får `disabled` tappar fokus i
+   Chrome (fokus flyttas till `body`). Då stannar inte fokus på knappen efter sparningen (AK-8). Dessutom
+   släpper en `disabled` knapp inga klick, så sabotage (b) skulle inte få AK-11 att falla.
+   Förslag: `aria-disabled="true"` plus `savingRef`. Playwrights `toBeDisabled` räknar `aria-disabled`.
+   Playwright klickar inte på en sådan knapp, så testet trycker Enter på knappen som har fokus.
+   Alternativ: `disabled` och flytta fokus tillbaka till knappen efter svaret. Vilket vill du ha?
+2. **Laddningsregionen och beslut 13.** "Laddar ärende…" är sidans första tillstånd, så regionen och
+   texten kommer i samma rendering. Ska jag rendera regionen tom och sätta texten i effekten som startar
+   hämtningen, eller räcker det att den finns från början? Uppläsningen går bara att kontrollera manuellt.
+3. **AK-6 i laddnings- och feltillståndet** går inte att framkalla mot hela stacken. Förslag: `e2e/`
+   testar visat ärende och "hittades inte", och testerna för AK-4 och AK-5 i `e2e-mocked/` kontrollerar
+   att länken syns. Räcker det, eller vill du ha egna klick-tester för AK-6 i den mockade sviten?
+4. **Vad räknas som giltigt id?** Förslag: bara `^[1-9]\d*$` upp till 2147483647 (backendens `int`).
+   Då ger `0`, `-1`, `1.5`, `01`, `1e3`, `abc` och för stora tal "Ärendet hittades inte" utan anrop.
+   `parseTicketId` är en ny fil som inte står i beslut 14, och testerna är intern logik (fallen utom `abc`
+   finns inte i specen). Får jag lägga den i `features/ticket-detail/` och testa de ogiltiga fallen med
+   ett `it.each`?
+5. **När försvinner "Välj en ny status"?** Specen säger inget. Förslag: som i registreringsformuläret,
+   alltså först vid nästa försök att spara. Ska fokus flytta till listan när felet visas (som AK-11 i
+   registreringen), eller stanna på knappen? Utan fokusflytt eller live-region läses felet inte upp.
+6. **Hur hittas värdena i `<dl>`?** Förslag: varje `<dd>` får `aria-labelledby` till sin `<dt>`, så att
+   testerna kan använda `getByRole('definition', { name: 'Status' })`. Alternativet utan extra ARIA är en
+   CSS-syskonväljare (`dt` + `dd`) i testerna. Vilket föredrar du?
+7. **Sidrubrik i laddning, laddfel och "hittades inte".** Bara det visade ärendet har en rubrik i specen.
+   Förslag: "Ärendet hittades inte" blir sidans `<h1>`, och laddning och laddfel har ingen `<h1>`
+   (texten står i live-regionen). Okej?
+8. **Spara samma status igen** (till exempel "Pågående" när ärendet redan är Pågående) skickar ett
+   `PUT`, får `200` och visar "Status ändrad till Pågående". Det följer specens beslut, men texten kan
+   uppfattas som att något ändrades. Jag testar det inte.
+9. **AK-1 och Skapad mot hela stacken.** Värdet beror på webbläsarens tidszon. Testet sätter
+   `timezoneId` och jämför med `formatCreatedAt` importerad från `src`. Själva formatet testas i AK-2.
+10. **Filer utanför min lista som blir inaktuella:**
+    - `e2e/smoke.spec.ts` säger att detaljsidan "loads nothing". Nu hämtar `/tickets/1` ett ärende
+      (404 eller ett ärende från ett annat test). Testet klarar sig, men kommentaren blir fel.
+    - Dokumentkommentaren i `client.ts` ("the other methods are still stubs") blir delvis fel. Får jag
+      ändra den raden?
+    - `AGENTS.md` nämner `e2e-mocked/ticket-list.spec.ts` och `docs/teststrategi.md` ett exempeltest i
+      den mockade sviten. Filen finns inte längre. Jag rör inte dessa.
+11. **Fyra live-regioner på sidan** när ärendet visas (sidans status och alert, formulärets status och
+    alert) plus `Layout`s. Testerna filtrerar på text inom `main`. Säg till om du hellre vill att sidan
+    och formuläret delar regioner.
