@@ -415,3 +415,44 @@ Koden återställdes efter varje sabotage (filen jämförd med en kopia), och sl
   skilja mellan versioner.
 - Att spara samma status igen testas inte, enligt beslut.
 - Kommentaren i `e2e/smoke.spec.ts` om att detaljsidan "loads nothing" är inaktuell. Linus tar den separat.
+
+## 5. Min granskning
+
+Sammanställd med Claude utifrån mina beslut under kontrollpunkterna. Granskad och godkänd av Linus.
+
+### Hur jag granskade
+- Läste planen mot specen och prompten innan någon kod skrevs, och svarade på agentens elva oklarheter.
+- Lät testerna köras om oberoende av agenten vid varje kontrollpunkt (unit, mockat och hela stacken).
+  Utfallet stämde varje gång.
+- Granskade diffen mot fillistan, besluten i prompten och mönstret i registreringsformuläret.
+- Gjorde den manuella kontrollen själv: alla AK i Chrome, tangentbord utan mus, strypt och blockerat
+  nätverk för laddning och fel, och VoiceOver för uppläsning och fokus i AK-4, AK-5, AK-7, AK-8, AK-10
+  och AK-12. Allt fungerade, även uppläsningen av "Laddar ärende…" som var osäker efter beslutet om
+  härlett laddningsläge.
+
+### Accepterat, ändrat, avvisat
+- **Accepterat:** planen, `aria-disabled` och ett skydd i koden i stället för `disabled`, att
+  laddningsregionen först renderas tom, egen fil för `parseTicketId` med `it.each`, separata
+  live-regioner för sidan och formuläret.
+- **Ändrat:**
+  - Giltigt id följer backendens regler (`01` betyder `1`). Agenten föreslog att avvisa `01`.
+  - Fokus flyttas till listan när "Välj en ny status" visas, och det är tillagt i AK-10 i specen.
+  - Laddningsläget härleds i stället för att sättas i en effekt, så att inget lint-undantag behövs.
+  - Testerna hittar värden med `+ dd` i stället för `aria-labelledby` på `<dd>`, efter att mitt
+    förslag visat sig ge ogiltig ARIA.
+- **Avvisat:** lint-undantaget för `setState` i en effekt.
+
+### Vad jag ifrågasatte
+- Om designen följde teamets design. Den gjorde inte det. Efter granskningen anpassade jag
+  sidan efter Figma: egen sida i stället för tvåkolumnslayout, och bara fält som ingår i
+  avgränsningen. Färgerna kontrollerades mot WCAG AA, och designspecens statusfärger låg under
+  4.5:1 som text på mörk bakgrund. Därför används de som tonad bakgrund med ljusare text.
+
+### Begränsningar som är kvar
+- End-to-end-testerna föll på rubriken när de var röda, så att AK-kontrollerna själva kan falla är bara
+  visat för AK-10 och AK-11 genom sabotage.
+- Värdena i `<dl>` hittas med `+ dd`, inte bara med roller.
+- Färgerna är hårdkodade som Tailwind-värden i två filer. När teamet har en gemensam design byts
+  de mot gemensamma variabler eller klasser. Strukturen och testerna påverkas inte.
+- Byte mellan två ärenden utan omladdning och att spara samma status igen testas inte. Specen har
+  inga AK för det.
