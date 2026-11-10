@@ -8,6 +8,7 @@ import type { Ticket } from '../src/types/ticket.ts'
 
 const ticket: Ticket = {
   id: 42,
+  ticketNumber: 'SR-2026-1042',
   title: 'Paketet har inte kommit',
   description: 'Beställde för två veckor sedan.',
   category: 'OrdersDeliveries',

@@ -32,7 +32,7 @@ public sealed class GetTicketTests(ApiFixture fixture) : IntegrationTest(fixture
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var ticket = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(
-            ["category", "createdAt", "customerEmail", "customerName", "description", "id", "priority", "status", "title"],
+            ["category", "createdAt", "customerEmail", "customerName", "description", "id", "priority", "status", "ticketNumber", "title"],
             ticket.EnumerateObject().Select(p => p.Name).Order());
         foreach (var field in created.EnumerateObject().Where(p => p.Name != "createdAt"))
         {

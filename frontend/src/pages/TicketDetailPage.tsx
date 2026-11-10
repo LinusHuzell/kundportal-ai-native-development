@@ -68,8 +68,8 @@ function TicketDetails({ ticket, onSaved }: { ticket: Ticket; onSaved: (ticket: 
       <header className="border-b border-white/10 px-6 pb-6 sm:px-8">
         <dl>
           <dt className="sr-only">Ärendenummer</dt>
-          <dd className="text-xs font-semibold tracking-wider text-[#2FB1A5] uppercase before:content-['Ärende_#']">
-            {ticket.id}
+          <dd className="text-xs font-semibold tracking-wider text-[#2FB1A5] uppercase before:content-['Ärende_']">
+            {ticket.ticketNumber}
           </dd>
         </dl>
         <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{ticket.title}</h1>

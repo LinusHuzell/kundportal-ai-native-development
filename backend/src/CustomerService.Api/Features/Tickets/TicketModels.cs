@@ -22,6 +22,7 @@ public record TicketResponse(
 {
     public static TicketResponse From(Ticket ticket) => new(
         ticket.Id,
+        ticket.TicketNumber,
         ticket.Title,
         ticket.Description,
         ticket.Category,

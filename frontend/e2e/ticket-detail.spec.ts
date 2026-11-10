@@ -64,7 +64,7 @@ test('AK-1: the title is the page heading and the other details have their label
 
   await openTicket(page, ticket)
 
-  await expect(detail(page, 'Ärendenummer')).toHaveText(String(ticket.id))
+  await expect(detail(page, 'Ärendenummer')).toHaveText(ticket.ticketNumber)
   await expect(detail(page, 'Status')).toHaveText('Nytt')
   await expect(detail(page, 'Prioritet')).toHaveText('Hög')
   await expect(detail(page, 'Kategori')).toHaveText('Returer/reklamation')
