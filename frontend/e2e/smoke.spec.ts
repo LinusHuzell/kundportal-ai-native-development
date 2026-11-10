@@ -3,8 +3,10 @@ import { expect, test } from '@playwright/test'
 test('app shell renders and redirects / to the ticket list', async ({ page }) => {
   await page.goto('/')
   await expect(page).toHaveURL(/\/tickets$/)
-  await expect(page.getByRole('link', { name: 'Customer Service Portal' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Tickets' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Kundserviceportal' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Ärenden', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Alla ärenden' })).toBeVisible()
+  await expect(page).toHaveTitle('Kundserviceportal')
 })
 
 // Screen readers pick the voice from the page language; the UI text is Swedish.

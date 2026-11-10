@@ -35,7 +35,7 @@
 * Felhantering:
     * Obligatoriska fält (rubrik, beskrivning, kategori, prioritet, namn, email) kan inte vara tomma eller bara innehålla mellanslag
     * Email valideras mot giltigt format
-    * Rubrik och beskrivning har en maxlängd (gräns ej beslutad än)
+    * Maxlängd, antal tecken: rubrik (200) och beskrivning (5000)
     * Vid valideringsfel sparas inget ärende, och användaren ser ett 
     begripligt felmeddelande kopplat till rätt fält
 * Hantera minst ett felaktivt användningsfall med begripligt besked till användaren.
@@ -60,8 +60,3 @@
 * **Linus:** Visa specifikt ärende, ändra status
 * **Carolina:** Registrera ärende, redigera ärende
 * **Sebastian:** Docker-setup och körinstruktioner
-
----
-
-## Öppna frågor
- * Längdgränser för rubrik/beskrivning?

@@ -10,7 +10,7 @@ export default function App() {
         <Route index element={<Navigate to="/tickets" replace />} />
         <Route path="/tickets" element={<TicketListPage />} />
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
-        <Route path="*" element={<p className="p-6">Page not found.</p>} />
+        <Route path="*" element={<p className="p-6">Sidan hittades inte.</p>} />
       </Route>
     </Routes>
   )

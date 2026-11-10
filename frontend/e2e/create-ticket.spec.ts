@@ -74,7 +74,7 @@ test('AK-7: Registrera ärende opens the form in a drawer over the ticket list',
 }) => {
   await openDrawer(page)
 
-  await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Ärenden', exact: true })).toBeVisible()
 })
 
 // Screen readers announce that the button opens a dialog before it is pressed.

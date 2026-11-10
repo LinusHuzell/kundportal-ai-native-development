@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
-import type { Ticket, TicketPriority, TicketStatus } from '../types/ticket'
+import {
+  CATEGORY_LABELS,
+  PRIORITY_LABELS,
+  STATUS_LABELS,
+  type Ticket,
+  type TicketPriority,
+  type TicketStatus,
+} from '../types/ticket'
 
 type TicketListState =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'loaded'; tickets: Ticket[] }
 
-const createdDateFormatter = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' })
+const createdDateFormatter = new Intl.DateTimeFormat('sv-SE', { dateStyle: 'medium' })
 const statusClassNames: Record<TicketStatus, string> = {
   New: 'bg-blue-500/15 text-blue-300',
   InProgress: 'bg-amber-500/15 text-amber-300',
@@ -50,33 +57,33 @@ export default function TicketListPage() {
 
   return (
     <div>
-      <h1 className="mb-5 text-2xl font-bold text-white" id="ticket-list-title">Tickets</h1>
+      <h1 className="mb-5 text-2xl font-bold text-white" id="ticket-list-title">Ärenden</h1>
       <div className="grid items-start gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <section
           className="min-w-0 overflow-hidden rounded-[7px] border border-line bg-portal/80"
           aria-labelledby="ticket-queue-title"
         >
           <h2 className="border-b border-line px-5 py-[18px] text-base font-semibold text-white" id="ticket-queue-title">
-            All tickets
+            Alla ärenden
           </h2>
 
           {state.status === 'loading' && (
             <p className="m-0 px-5 py-7 text-[13px] text-copy-muted" role="status">
-              Loading tickets...
+              Laddar ärenden…
             </p>
           )}
           {state.status === 'error' && (
             <p className="m-0 px-5 py-7 text-[13px] text-red-300" role="alert">
-              Tickets could not be loaded. Please try again.
+              Kunde inte hämta ärenden. Försök igen.
             </p>
           )}
           {state.status === 'loaded' && state.tickets.length === 0 && (
-            <p className="m-0 px-5 py-7 text-[13px] text-copy-muted">No tickets found.</p>
+            <p className="m-0 px-5 py-7 text-[13px] text-copy-muted">Inga ärenden hittades.</p>
           )}
           {state.status === 'loaded' && state.tickets.length > 0 && (
             <div
               className="max-h-[72vh] space-y-2 overflow-y-auto p-2 [scrollbar-color:#40546a_transparent] [scrollbar-width:thin] max-md:max-h-[52vh]"
-              aria-label="Tickets"
+              aria-label="Ärenden"
             >
               {state.tickets.map((ticket) => {
                 const isSelected = ticket.id === selectedTicketId
@@ -99,7 +106,7 @@ export default function TicketListPage() {
                       <span
                         className={`inline-flex min-h-[22px] items-center whitespace-nowrap rounded px-2 text-[10px] font-semibold ${priorityClassNames[ticket.priority]}`}
                       >
-                        {ticket.priority}
+                        {PRIORITY_LABELS[ticket.priority]}
                       </span>
                     </span>
                     <span className="mt-2.5 block text-[13px] font-semibold leading-[1.45] text-white">
@@ -110,7 +117,7 @@ export default function TicketListPage() {
                         className={`inline-flex min-h-[22px] items-center gap-1.5 whitespace-nowrap rounded px-2 text-[10px] font-semibold ${statusClassNames[ticket.status]}`}
                       >
                         <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
-                        {ticket.status}
+                        {STATUS_LABELS[ticket.status]}
                       </span>
                       <time className="whitespace-nowrap text-[10px] text-copy-dim" dateTime={ticket.createdAt}>
                         {createdDateFormatter.format(new Date(ticket.createdAt))}
@@ -128,13 +135,13 @@ export default function TicketListPage() {
           aria-labelledby="ticket-details-title"
         >
           <div className="border-b border-line px-5 py-[18px]">
-            <p className="mb-1 text-[10px] font-bold tracking-[0.12em] text-teal">SELECTED TICKET</p>
-            <h2 className="text-base font-semibold text-white" id="ticket-details-title">Ticket details</h2>
+            <p className="mb-1 text-[10px] font-bold tracking-[0.12em] text-teal">VALT ÄRENDE</p>
+            <h2 className="text-base font-semibold text-white" id="ticket-details-title">Ärendedetaljer</h2>
           </div>
 
           {selectedTicket ? (
             <div className="divide-y divide-line">
-              <section className="p-5" aria-label="Ticket description">
+              <section className="p-5" aria-label="Ärendebeskrivning">
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-copy-dim">
                   {selectedTicket.ticketNumber}
                 </p>
@@ -146,38 +153,38 @@ export default function TicketListPage() {
 
               <dl className="grid grid-cols-2 gap-x-4 gap-y-5 p-5 text-sm">
                 <div>
-                  <dt className="text-xs text-copy-dim">Category</dt>
-                  <dd className="mt-1 font-medium text-white">{selectedTicket.category}</dd>
+                  <dt className="text-xs text-copy-dim">Kategori</dt>
+                  <dd className="mt-1 font-medium text-white">{CATEGORY_LABELS[selectedTicket.category]}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-copy-dim">Priority</dt>
-                  <dd className="mt-1 font-medium text-white">{selectedTicket.priority}</dd>
+                  <dt className="text-xs text-copy-dim">Prioritet</dt>
+                  <dd className="mt-1 font-medium text-white">{PRIORITY_LABELS[selectedTicket.priority]}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-copy-dim">Status</dt>
-                  <dd className="mt-1 font-medium text-white">{selectedTicket.status}</dd>
+                  <dd className="mt-1 font-medium text-white">{STATUS_LABELS[selectedTicket.status]}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-copy-dim">Created</dt>
+                  <dt className="text-xs text-copy-dim">Skapad</dt>
                   <dd className="mt-1 font-medium text-white">
                     {createdDateFormatter.format(new Date(selectedTicket.createdAt))}
                   </dd>
                 </div>
               </dl>
 
-              <section className="p-5" aria-label="Customer information">
-                <h3 className="mb-3 text-sm font-semibold text-white">Customer</h3>
+              <section className="p-5" aria-label="Kunduppgifter">
+                <h3 className="mb-3 text-sm font-semibold text-white">Kund</h3>
                 <dl className="grid gap-3 text-sm">
                   <div>
-                    <dt className="text-xs text-copy-dim">Name</dt>
+                    <dt className="text-xs text-copy-dim">Namn</dt>
                     <dd className="mt-1 break-words text-copy-muted">
-                      {selectedTicket.customerName || 'Not provided'}
+                      {selectedTicket.customerName || 'Uppgift saknas'}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-copy-dim">Email</dt>
+                    <dt className="text-xs text-copy-dim">E-post</dt>
                     <dd className="mt-1 break-all text-copy-muted">
-                      {selectedTicket.customerEmail || 'Not provided'}
+                      {selectedTicket.customerEmail || 'Uppgift saknas'}
                     </dd>
                   </div>
                 </dl>
@@ -186,10 +193,10 @@ export default function TicketListPage() {
           ) : (
             <p className="px-5 py-7 text-[13px] text-copy-muted" role="status">
               {state.status === 'loading'
-                ? 'Loading ticket details...'
+                ? 'Laddar ärendedetaljer…'
                 : state.status === 'error'
-                  ? 'Ticket details are unavailable.'
-                  : 'No ticket selected.'}
+                  ? 'Ärendedetaljerna är inte tillgängliga.'
+                  : 'Inget ärende valt.'}
             </p>
           )}
         </aside>

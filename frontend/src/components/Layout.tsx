@@ -36,11 +36,11 @@ export default function Layout() {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
           <Link to="/tickets" className="text-lg font-semibold">
-            Customer Service Portal
+            Kundserviceportal
           </Link>
           <nav className="flex items-center gap-2">
             <NavLink to="/tickets" end className={navClass}>
-              Tickets
+              Ärenden
             </NavLink>
             <button
               ref={openButtonRef}

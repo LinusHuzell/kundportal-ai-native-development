@@ -108,7 +108,7 @@ test('AK-6: Tillbaka till ärendelistan leads from a ticket to the ticket list',
   await main(page).getByRole('link', { name: 'Tillbaka till ärendelistan' }).click()
 
   await expect(page).toHaveURL(/\/tickets$/)
-  await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Ärenden', exact: true })).toBeVisible()
 })
 
 test('AK-6: Tillbaka till ärendelistan leads from Ärendet hittades inte to the ticket list', async ({
@@ -122,7 +122,7 @@ test('AK-6: Tillbaka till ärendelistan leads from Ärendet hittades inte to the
   await main(page).getByRole('link', { name: 'Tillbaka till ärendelistan' }).click()
 
   await expect(page).toHaveURL(/\/tickets$/)
-  await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Ärenden', exact: true })).toBeVisible()
 })
 
 test('AK-7: a new ticket has Nytt selected, all four statuses and Nytt cannot be chosen', async ({
