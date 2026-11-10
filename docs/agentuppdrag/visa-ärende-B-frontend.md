@@ -314,3 +314,22 @@ ger "10 nov. 2026 14:30" för `2026-11-10T13:30:00Z`.
 11. **Fyra live-regioner på sidan** när ärendet visas (sidans status och alert, formulärets status och
     alert) plus `Layout`s. Testerna filtrerar på text inom `main`. Säg till om du hellre vill att sidan
     och formuläret delar regioner.
+
+## 3. Kontrollpunkter
+
+### Kontrollpunkt 1: planen (2026-11-10)
+Godkänd med svar på agentens oklarheter. Viktigast: agenten visade att beslut 8 (knappen
+`disabled` under sparning) krockade med AK-8. En fokuserad knapp som blir `disabled` tappar fokus,
+och en `disabled`-knapp ignorerar klick, så sabotage (b) hade aldrig kunnat få AK-11 att falla.
+Ändrat till `aria-disabled="true"` och ett skydd i koden. Övriga svar: laddningsregionen renderas
+tom först, giltigt id är `^\d+$` inom 1–2147483647 som i backend, fokus flyttas till listan vid
+"Välj en ny status" (tillagt i AK-10 i specen), `<dd>` får `aria-labelledby`, "Ärendet hittades
+inte" är `<h1>`, separata live-regioner för sidan och formuläret.
+
+### Kontrollpunkt 2: röda tester (2026-11-10)
+Körde allt själv med samma utfall som agenten: 22 enhetstester, 6 mockade och 10 end-to-end-tester
+faller på påståenden, alla befintliga gröna, typecheck och lint rena.
+
+Begränsning: end-to-end-testerna faller på första steget (rubriken), eftersom sidan är en
+platshållare. Att AK-kontrollerna själva kan falla visas bara för AK-10 och AK-11 genom
+sabotagekontrollerna. Skapad i AK-1 jämförs med `formatCreatedAt`, vars format låses av AK-2.
