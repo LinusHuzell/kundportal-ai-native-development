@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type PointerEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { ApiError, api } from '../../api/client'
+import SaveIcon from '../../components/SaveIcon'
 import {
   CATEGORY_LABELS,
   PRIORITY_LABELS,
@@ -284,8 +285,9 @@ export default function CreateTicketDrawer({ onClose, onSaved }: Props) {
 
         <button
           type="submit"
-          className="rounded-md bg-teal px-4 py-2 text-sm font-semibold text-portal hover:bg-[#4CC5BA] focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 focus:ring-offset-panel"
+          className="inline-flex items-center gap-2 rounded-md bg-teal px-4 py-2 text-sm font-semibold text-portal hover:bg-[#4CC5BA] focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 focus:ring-offset-panel"
         >
+          <SaveIcon className="size-4 shrink-0" />
           Spara ärende
         </button>
       </form>
