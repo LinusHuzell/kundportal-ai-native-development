@@ -172,6 +172,52 @@
         }
       }
     },
+    "/api/tickets/{id}/history": {
+      "get": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Get a ticket's history, newest first",
+        "operationId": "GetTicketHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketHistoryEventResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/tickets/{id}/status": {
       "put": {
         "tags": [
@@ -381,6 +427,27 @@
           "ReturnsComplaints",
           "Other"
         ]
+      },
+      "TicketEventType": {
+        "enum": [
+          "Created"
+        ]
+      },
+      "TicketHistoryEventResponse": {
+        "required": [
+          "type",
+          "occurredAt"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/TicketEventType"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "TicketPriority": {
         "enum": [
