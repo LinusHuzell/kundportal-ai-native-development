@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 
-/*
- * Design tokens go here once the Figma design is final (@theme { ... }).
- * Until then we use Tailwind's neutral defaults.
- */
+@theme {
+	--font-sans: Inter, 'Segoe UI', sans-serif;
+	--color-portal: #0f1c2e;
+	--color-panel: #16283d;
+	--color-teal: #2fb1a5;
+	--color-copy-muted: #aab6c5;
+	--color-copy-dim: #7e8b9a;
+	--color-line: rgb(170 182 197 / 15%);
+}

@@ -9,7 +9,7 @@ import type {
 } from '../types/ticket.ts'
 
 /**
- * API client. createTicket, getTicket, getTicketHistory and updateTicketStatus follow
+ * API client. listTickets, createTicket, getTicket, getTicketHistory and updateTicketStatus follow
  * docs/api/kontrakt.md; the other methods are still stubs.
  * Base URL is configured via VITE_API_BASE_URL (see .env.example).
  */
@@ -79,7 +79,7 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
 }
 
 export const api = {
-  listTickets: async (): Promise<Ticket[]> => notImplemented('listTickets'),
+  listTickets: (): Promise<Ticket[]> => request<Ticket[]>('/tickets', { method: 'GET' }),
   getTicket: (id: number): Promise<Ticket> => request<Ticket>(`/tickets/${id}`, { method: 'GET' }),
   getTicketHistory: (id: number): Promise<TicketHistoryEvent[]> =>
     request<TicketHistoryEvent[]>(`/tickets/${id}/history`, { method: 'GET' }),

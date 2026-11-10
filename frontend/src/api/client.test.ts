@@ -33,6 +33,25 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+describe('api.listTickets', () => {
+  it('returns the ticket list from a successful response', async () => {
+    const fetchMock = respond(200, [ticket])
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(api.listTickets()).resolves.toEqual([ticket])
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/tickets`, { method: 'GET' })
+  })
+
+  it('throws an ApiError with the response status when the request fails', async () => {
+    vi.stubGlobal('fetch', respond(500, { title: 'An error occurred', status: 500 }, 'application/problem+json'))
+
+    const request = api.listTickets()
+
+    await expect(request).rejects.toBeInstanceOf(ApiError)
+    await expect(request).rejects.toMatchObject({ status: 500 })
+  })
+})
+
 describe('api.createTicket', () => {
   it('posts the input as JSON to /tickets and returns the created ticket', async () => {
     const fetchMock = respond(201, ticket)
