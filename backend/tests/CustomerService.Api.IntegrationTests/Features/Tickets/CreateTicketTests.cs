@@ -52,7 +52,10 @@ public sealed class CreateTicketTests(ApiFixture fixture) : IntegrationTest(fixt
         var id = ticket.GetProperty("id").GetInt32();
         Assert.Equal($"/api/tickets/{id}", response.Headers.Location?.OriginalString);
         Assert.Equal("New", ticket.GetProperty("status").GetString());
-        Assert.InRange(ticket.GetProperty("createdAt").GetDateTimeOffset(), before, after);
+        var createdAt = ticket.GetProperty("createdAt").GetDateTimeOffset();
+        Assert.InRange(createdAt, before, after);
+        Assert.True(ticket.TryGetProperty("ticketNumber", out var ticketNumber), "ticketNumber saknas i svaret");
+        Assert.Equal($"SR-{createdAt.UtcDateTime.Year}-{1000 + id}", ticketNumber.GetString());
         Assert.Equal("Paketet har inte kommit", ticket.GetProperty("title").GetString());
         Assert.Equal("anna@example.com", ticket.GetProperty("customerEmail").GetString());
     }

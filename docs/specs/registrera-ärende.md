@@ -12,7 +12,7 @@ när applikationen startas om.
 ## Ingår
 - Fält: rubrik, beskrivning, kategori, prioritet, namn, email
 - Prioritet är förifylld med "Medel" (kan ändras). Kategori har inget förval.
-- Automatiskt vid sparning: ärendenummer (id), status ("Nytt"), tidpunkt (createdAt)
+- Automatiskt vid sparning: id, ärendenummer (ticketNumber, `SR-<år>-<1000 + id>`), status ("Nytt"), tidpunkt (createdAt)
 - Frontend: formulär i en drawer som öppnas från knappen "Registrera ärende" i navigeringen, med validering och felmeddelanden
 - Backend: endpoint `POST /api/tickets`
 - Samma valideringsregler i frontend och backend (se Felfall)
@@ -96,7 +96,8 @@ backend. Stora bokstäver normaliseras inte.
 **AK-4**
 - Given: Ett anrop till `POST /api/tickets` med giltiga uppgifter
 - When: Anropet skickas
-- Then: Svaret är `201`, ärendet sparas med status "Nytt", id och tidpunkt
+- Then: Svaret är `201`, ärendet sparas med status "Nytt", id, ärendenummer och tidpunkt.
+  Svaret innehåller `ticketNumber` i formatet `SR-<år>-<1000 + id>`
 
 **AK-5**
 - Given: Ett anrop där ett fält bryter mot en regel i Felfall

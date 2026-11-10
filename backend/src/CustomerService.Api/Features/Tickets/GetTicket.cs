@@ -1,3 +1,5 @@
+using CustomerService.Api.Data;
+
 namespace CustomerService.Api.Features.Tickets;
 
 public static class GetTicket
@@ -9,6 +11,13 @@ public static class GetTicket
             .Produces<TicketResponse>()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-    // Stub until persistence exists.
-    private static IResult Handle(int id) => Results.StatusCode(StatusCodes.Status501NotImplemented);
+    private static async Task<IResult> Handle(
+        int id, ApplicationDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var ticket = await dbContext.Tickets.FindAsync([id], cancellationToken);
+
+        return ticket is null
+            ? Results.Problem(statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(TicketResponse.From(ticket));
+    }
 }

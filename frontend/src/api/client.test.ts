@@ -11,7 +11,7 @@ const input: CreateTicketInput = {
   customerEmail: 'anna@example.com',
 }
 
-const ticket: Ticket = { ...input, id: 1, status: 'New', createdAt: '2026-11-09T09:30:00Z' }
+const ticket: Ticket = { ...input, id: 1, ticketNumber: 'SR-2026-1001', status: 'New', createdAt: '2026-11-09T09:30:00Z' }
 
 const respond = (status: number, body: unknown, contentType = 'application/json') =>
   vi
@@ -110,5 +110,71 @@ describe('api.createTicket', () => {
 
     expect(error).toBeInstanceOf(ApiError)
     expect(error).toMatchObject({ status: 0, fieldErrors: undefined })
+  })
+})
+
+describe('api.getTicket', () => {
+  it('gets /tickets/{id} and returns the ticket', async () => {
+    const fetchMock = respond(200, ticket)
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(api.getTicket(1)).resolves.toEqual(ticket)
+
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/tickets/1`, { method: 'GET' })
+  })
+
+  it('turns a 404 into an error with status 404', async () => {
+    const problem: ProblemDetails = { title: 'Not Found', status: 404 }
+    vi.stubGlobal('fetch', respond(404, problem, 'application/problem+json'))
+
+    const error = await api.getTicket(1).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 404 })
+  })
+
+  it('turns a network failure into an error with status 0', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    const error = await api.getTicket(1).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 0 })
+  })
+})
+
+describe('api.updateTicketStatus', () => {
+  const updated: Ticket = { ...ticket, status: 'Closed' }
+
+  it('puts the status as JSON to /tickets/{id}/status and returns the ticket', async () => {
+    const fetchMock = respond(200, updated)
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(api.updateTicketStatus(1, 'Closed')).resolves.toEqual(updated)
+
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/tickets/1/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Closed' }),
+    })
+  })
+
+  it('turns a 404 into an error with status 404', async () => {
+    const problem: ProblemDetails = { title: 'Not Found', status: 404 }
+    vi.stubGlobal('fetch', respond(404, problem, 'application/problem+json'))
+
+    const error = await api.updateTicketStatus(1, 'Closed').catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 404 })
+  })
+
+  it('turns a network failure into an error with status 0', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    const error = await api.updateTicketStatus(1, 'Closed').catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 0 })
   })
 })

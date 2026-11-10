@@ -36,13 +36,14 @@ Never mock what the real stack can produce, such as a validation error or a miss
 - Sabotage-check critical tests (persistence, status changes, validation rules): temporarily disable the behaviour, confirm the test fails for the right reason, restore it.
 - Never weaken, skip or delete a test to make a run pass. Fix the cause or ask.
 - Keep each test small, self-explanatory and about one thing. Name it after the behaviour.
+- Parametrized tests (`[Theory]`, `it.each`) are fine for small, closely related cases of the same rule with the same expected result, such as several invalid values that give the same error. Keep different rules and results in separate tests.
 
 ### Backend
 
 - Integration tests use real Postgres via Testcontainers, never the EF InMemory provider or SQLite.
 - Integration test classes inherit from `IntegrationTest`. All tests share one container and one app (`Fixture.Factory`), run sequentially, and start with an empty database. When a migration adds a table, add it to `ApiFixture.ResetDatabaseAsync`.
 - Verify persistence by reading back separately, through the API or a new `DbContext` (`Fixture.CreateDbContext()`), never from the `DbContext` that wrote the data.
-- Endpoints are still stubs, so the existing persistence test uses `DbContext`. Each feature tests its own persistence through its API.
+- The persistence test in `Data/` uses `DbContext` because it was written before the endpoints existed. Each feature tests its own persistence through its API.
 
 ### Frontend
 
@@ -50,7 +51,6 @@ Never mock what the real stack can produce, such as a validation error or a miss
 - Never mock in `frontend/e2e/` (`page.route`, `context.route`, `routeFromHAR`).
 - End-to-end tests create their own data through the API with unique values and assert only on it. Never rely on seed data or other tests' data.
 - Type mocked responses with the client's types, shape them after `docs/api/openapi.json`, and mock errors as problem+json.
-- `frontend/e2e-mocked/ticket-list.spec.ts` is a placeholder. Delete it when adding the first real error-state test.
 
 ### Docker Compose
 
@@ -79,3 +79,18 @@ Report coverage but never enforce it (no thresholds, no tests written to raise a
 Run Playwright only through the commands above. Plain `npx playwright test` also runs the full-stack suite without a backend.
 
 CI: Backend CI runs row 1 and the `openapi.json` check, Frontend CI rows 2 and 3, E2E row 4 on changes to frontend, backend or the test stack. Run the tests your change affects and report the actual output. Never claim something works without running it.
+
+## Accessibility
+
+All frontend code follows WCAG 2.2 AA.
+
+- Semantic HTML first (`<button>`, not `<div onClick>`).
+- Every form field has an associated `<label>`.
+- Error messages are linked to their field with `aria-describedby`.
+- Everything interactive works with the keyboard and has a visible focus state.
+- Color is never the only carrier of meaning (status and priority also need text).
+- Icon-only buttons have an accessible name (`aria-label`).
+- The page language is Swedish (`<html lang="sv">`). Mark English parts with `lang="en"`.
+
+AI output often misses ARIA attributes and keyboard behavior unless asked. Check these when
+reviewing generated code.

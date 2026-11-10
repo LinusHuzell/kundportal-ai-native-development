@@ -459,6 +459,7 @@
       "TicketResponse": {
         "required": [
           "id",
+          "ticketNumber",
           "title",
           "description",
           "category",
@@ -477,6 +478,9 @@
               "string"
             ],
             "format": "int32"
+          },
+          "ticketNumber": {
+            "type": "string"
           },
           "title": {
             "type": "string"
@@ -520,7 +524,10 @@
         "type": "object",
         "properties": {
           "status": {
-            "$ref": "#/components/schemas/TicketStatus"
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

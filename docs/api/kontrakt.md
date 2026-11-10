@@ -19,6 +19,7 @@ Maskinläsbar specifikation: [openapi.json](openapi.json), genererad från backe
 ```json
 {
   "id": 1,
+  "ticketNumber": "SR-2026-1001",
   "title": "Paketet har inte kommit",
   "description": "Beställde för två veckor sedan.",
   "category": "OrdersDeliveries",
@@ -59,6 +60,11 @@ Samma fält som `CreateTicketRequest`, alla valfria (PATCH). Skickade fält vali
 ```json
 { "status": "InProgress" }
 ```
+
+`status` är obligatoriskt och tas emot som sträng, så att ett saknat eller okänt värde ger ett fel på
+fältet i stället för ett JSON-fel. Tillåtna värden är `InProgress`, `WaitingForCustomer` och `Closed`,
+med exakt skiftläge. `New` går aldrig att sätta. Samma status som ärendet redan har ger `200` och
+ärendet är oförändrat. I `openapi.json` visas fältet som `string` (eller `null`) utan lista över värden.
 
 ### TicketEvent
 
@@ -109,9 +115,19 @@ Regler och felmeddelanden för `POST /tickets` kommer från tabellen Felfall i
 - Stora bokstäver i e-postadressen normaliseras inte.
 - Varje fält får högst ett fel. Alla felaktiga fält rapporteras i samma svar.
 - Vid fel sparas inget.
-- `status` måste vara ett giltigt enum-värde (`PUT /tickets/{id}/status`).
 - Fel JSON-typ (t.ex. `"title": 123`) eller trasig JSON ger `400` från ramverket, utan `errors`.
 
+Vid sparning sätts `status` till `New` och `createdAt` till serverns tid i UTC. Backend genererar också
+ärendenumret `ticketNumber` i formatet `SR-<år>-<1000 + id>`, där `<år>` är året i `createdAt` (UTC),
+t.ex. `SR-2026-1001` för id 1. Fältet skickas i alla svar med `Ticket` men tas inte emot i anrop.
+
+Regler och felmeddelanden för `PUT /tickets/{id}/status` kommer från tabellen Felfall i
+[docs/specs/visa-ärende-och-ändra-status.md](../specs/visa-ärende-och-ändra-status.md):
+
+| Fält | Regel | Felmeddelande |
+|---|---|---|
+| `status` | `New` | Status kan inte ändras till Nytt |
+| `status` | Saknas, tomt eller okänt värde (även fel skiftläge) | Välj en giltig status |
 Vid sparning sätts `status` till `New` och `createdAt` till serverns tid i UTC. Ärendet får också
 ett internt ärendenummer, `SR-<år>-<1000 + id>`, som inte finns i API:t.
 
