@@ -52,9 +52,13 @@ export default function StatusForm({ ticket, onSaved }: Props) {
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit} className="mt-8 space-y-3">
+    <form
+      noValidate
+      onSubmit={handleSubmit}
+      className="mt-4 space-y-3 border-t border-white/10 pt-4"
+    >
       <div>
-        <label htmlFor={`${id}-status`} className="block text-sm font-medium text-slate-900">
+        <label htmlFor={`${id}-status`} className="block text-sm text-[#AAB6C5]">
           Status
         </label>
         <select
@@ -64,7 +68,7 @@ export default function StatusForm({ ticket, onSaved }: Props) {
           onChange={(event) => setStatus(event.target.value as TicketStatus)}
           aria-invalid={fieldError ? true : undefined}
           aria-describedby={fieldError ? `${id}-status-error` : undefined}
-          className="mt-1 block w-full max-w-xs rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:ring-2 focus:ring-slate-900 focus:outline-none aria-invalid:border-red-700 aria-invalid:ring-red-700"
+          className="mt-1 block w-full rounded-md border border-[#7E8B9A] bg-[#0F1C2E] px-3 py-2 text-sm text-white focus:border-[#2FB1A5] focus:ring-2 focus:ring-[#2FB1A5] focus:outline-none aria-invalid:border-[#FCA5A5] aria-invalid:ring-[#FCA5A5]"
         >
           {TICKET_STATUSES.map((value) => (
             <option key={value} value={value} disabled={value === 'New'}>
@@ -73,7 +77,7 @@ export default function StatusForm({ ticket, onSaved }: Props) {
           ))}
         </select>
         {fieldError && (
-          <p id={`${id}-status-error`} className="mt-1 text-sm text-red-700">
+          <p id={`${id}-status-error`} className="mt-1 text-sm text-[#FCA5A5]">
             {fieldError}
           </p>
         )}
@@ -83,18 +87,18 @@ export default function StatusForm({ ticket, onSaved }: Props) {
       <button
         type="submit"
         aria-disabled={saving ? true : undefined}
-        className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:bg-slate-500"
+        className="rounded-md bg-[#2FB1A5] px-4 py-2 text-sm font-semibold text-[#0F1C2E] hover:bg-[#4CC5BA] focus:ring-2 focus:ring-[#2FB1A5] focus:ring-offset-2 focus:ring-offset-[#16283D] focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:bg-white/10 aria-disabled:text-[#AAB6C5]"
       >
         {saving ? 'Sparar…' : 'Spara status'}
       </button>
 
       {/* Always rendered so screen readers announce the text when it is set. */}
-      <p role="status" className="text-sm text-slate-900">
+      <p role="status" className="text-sm text-[#86EFAC]">
         {confirmation}
       </p>
       <p
         role="alert"
-        className={saveError ? 'rounded-md bg-red-50 px-3 py-2 text-sm text-red-800' : ''}
+        className={saveError ? 'rounded-md bg-[#DC2626]/20 px-3 py-2 text-sm text-[#FCA5A5]' : ''}
       >
         {saveError}
       </p>
