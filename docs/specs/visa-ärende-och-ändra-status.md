@@ -118,7 +118,7 @@ samma stora och små bokstäver.
 **AK-10**
 - Given: Ett ärende med status "Nytt" visas och "Nytt" är fortfarande valt
 - When: Handläggaren väljer "Spara status"
-- Then: "Välj en ny status" visas kopplat till listan via aria-describedby, och inget anrop skickas
+- Then: "Välj en ny status" visas kopplat till listan via aria-describedby, fokus flyttas till listan, och inget anrop skickas
 
 **AK-11**
 - Given: Handläggaren har valt "Spara status" och svaret från servern har inte kommit
