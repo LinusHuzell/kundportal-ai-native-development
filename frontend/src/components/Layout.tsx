@@ -41,6 +41,7 @@ export default function Layout() {
               onClick={openDrawer}
               className="rounded bg-teal px-3 py-1.5 text-sm font-medium text-portal hover:bg-[#4CC5BA] focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 focus:ring-offset-portal"
             >
+              <span aria-hidden="true" className="mr-1">+</span>
               Registrera ärende
             </button>
           </nav>

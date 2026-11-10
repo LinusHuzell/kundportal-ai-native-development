@@ -25,7 +25,7 @@ när applikationen startas om.
 
 ## Beslut
 - Knappen "Registrera ärende" ligger i navigeringen överst, så att ärenden kan registreras
-  från alla sidor. Drawern öppnas över den sida som visas. Avviker från Figma-mocken
+  från alla sidor. Knappen har en dekorativ plusikon före texten. Drawern öppnas över den sida som visas. Avviker från Figma-mocken
   (gruppens designunderlag), där knappen finns på listsidan. Beslutat av Carolina.
 - Knappen "Registrera ärende" har `aria-haspopup="dialog"`. Inget WCAG-krav. Lagt till av
   Carolina efter kontroll med VoiceOver: knappen lästes bara som "knapp" och
