@@ -1,5 +1,9 @@
 # Instructions for AI agents
 
+## Workflow
+
+Work spec-driven: follow [docs/arbetssätt.md](docs/arbetssätt.md) (Swedish) and write specs from [docs/specs/_mall.md](docs/specs/_mall.md).
+
 ## Testing
 
 Read [docs/teststrategi.md](docs/teststrategi.md) (Swedish) before writing or changing tests. The rules below add to it.
