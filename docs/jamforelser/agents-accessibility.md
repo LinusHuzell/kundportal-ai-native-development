@@ -64,7 +64,7 @@ Granskar en agent tillgänglighet bättre när teamets `AGENTS.md` har regler f�
 
 - Två körningar per version. Svaren varierar mellan körningar.
 - Jag valde felen själv, och flera står nästan ordagrant i den nya instruktionen.
-- Jämförelsen mäter **granskning**. Om instruktionen gör att agenten tittar utanför filerna i ett uppdrag när den **bygger** är inte prövat.
+- Jämförelsen mäter **granskning**. Om instruktionen gör att agenten tittar utanför filerna i ett uppdrag när den **bygger** prövas i [byggjämförelsen](agents-accessibility-bygg.md).
 - Alla körningar gjordes med samma verktyg och modell, samma dag.
 
 ## Bilaga: agentens svar
