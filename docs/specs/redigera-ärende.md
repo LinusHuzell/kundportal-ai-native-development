@@ -34,19 +34,7 @@ Detta är ett antagande från Carolina. Det är inte beslutat av gruppen.
   ingen drawer öppnas.
   Alternativ som inte valts i antagandet: separat redigeringsformulär, drawer.
   Motivering: samma utseende som detaljpanelen och färre steg för handläggaren.
-- Beslut (2026-11-10): Carolina bygger redigeringskomponenten (validering,
-  sparning, endpoint) och lägger själv in knappen "Redigera" i detaljpanelen.
-  Detaljsidan ägs av Linus (se arbetsfördelningen i avgränsningar.md), så
-  ändringen i hans fil hålls så liten som möjligt.
 
-Att följa upp:
-1. Fråga Linus om detaljpanelen kan visa redigeringskomponenten.
-2. ~~Fråga gruppen om vem som bygger redigeringen (Carolina eller Linus).~~
-   Besvarad 2026-11-10: Carolina bygger den, inklusive knappen.
-3. ~~Fråga Linus om AK-3 (ärendet finns inte) hör till detaljpanelen eller
-   till detta moment, eftersom ingen egen redigeringsvy finns.~~
-   Besvarad 2026-11-11: detaljpanelen. Se AK-3.
-4. Uppdatera specen och acceptanskriterierna efter svaren.
 
 ## Acceptanskriterier
 
