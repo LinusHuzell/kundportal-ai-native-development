@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode, Ref } from 'react'
 import {
   CATEGORY_LABELS,
   PRIORITY_LABELS,
@@ -42,6 +42,10 @@ interface Props {
   emptyMessage?: string
   emptyMessageRole?: 'status' | 'alert'
   children?: ReactNode
+  onEdit?: () => void
+  editButtonRef?: Ref<HTMLButtonElement>
+  /** When set, replaces the read-only details. The ticket number stays. */
+  editForm?: ReactNode
 }
 
 export default function TicketDetailsPanel({
@@ -49,19 +53,34 @@ export default function TicketDetailsPanel({
   emptyMessage,
   emptyMessageRole = 'status',
   children,
+  onEdit,
+  editButtonRef,
+  editForm,
 }: Props) {
   return (
     <>
-      <div className="border-b border-line px-5 py-[18px]">
-        <p className="mb-1 text-[10px] font-bold tracking-[0.12em] text-teal">VALT ÄRENDE</p>
-        <h2 className="text-base font-semibold text-white" id="ticket-details-title">
-          Ärendedetaljer
-        </h2>
+      <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-[18px]">
+        <div>
+          <p className="mb-1 text-[10px] font-bold tracking-[0.12em] text-teal">VALT ÄRENDE</p>
+          <h2 className="text-base font-semibold text-white" id="ticket-details-title">
+            Ärendedetaljer
+          </h2>
+        </div>
+        {ticket && onEdit && !editForm && (
+          <button
+            ref={editButtonRef}
+            type="button"
+            onClick={onEdit}
+            className="rounded-md border border-[#7E8B9A] px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 focus:ring-offset-panel"
+          >
+            Redigera
+          </button>
+        )}
       </div>
 
       {ticket ? (
         <div className="divide-y divide-line">
-          <section className="p-5" aria-label="Ärendebeskrivning">
+          <section className="p-5" aria-label={editForm ? 'Redigera ärende' : 'Ärendebeskrivning'}>
             <dl>
               <dt className="sr-only">Ärendenummer</dt>
               <dd className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-copy-dim">
@@ -80,6 +99,8 @@ export default function TicketDetailsPanel({
                 {ticket.ticketNumber}
               </dd>
             </dl>
+            {editForm ?? (
+            <>
             <h3 className="text-lg font-semibold leading-snug text-white">{ticket.title}</h3>
             <dl className="mt-4">
               <dt className="mb-1.5 flex items-center gap-1.5 text-xs text-copy-dim">
@@ -102,8 +123,12 @@ export default function TicketDetailsPanel({
                 {ticket.description}
               </dd>
             </dl>
+            </>
+            )}
           </section>
 
+          {!editForm && (
+          <>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-5 p-5 text-sm">
             <div>
               <FieldLabel icon="category">Kategori</FieldLabel>
@@ -159,6 +184,8 @@ export default function TicketDetailsPanel({
               </div>
             </dl>
           </section>
+          </>
+          )}
 
           {children && <div className="space-y-5 p-5">{children}</div>}
         </div>

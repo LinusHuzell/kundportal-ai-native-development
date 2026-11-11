@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { CreateTicketInput, Ticket, TicketHistoryEvent } from '../types/ticket'
+import type { CreateTicketInput, Ticket, TicketHistoryEvent, UpdateTicketInput } from '../types/ticket'
 import { API_BASE_URL, ApiError, api, type ProblemDetails } from './client'
 
 const input: CreateTicketInput = {
@@ -229,5 +229,68 @@ describe('api.updateTicketStatus', () => {
 
     expect(error).toBeInstanceOf(ApiError)
     expect(error).toMatchObject({ status: 0 })
+  })
+})
+
+describe('api.updateTicket', () => {
+  const changes: UpdateTicketInput = { ...input, title: 'Paketet kom fram trasigt', priority: 'High' }
+  const updated: Ticket = { ...ticket, ...changes }
+  const updateTicketError = () => api.updateTicket(1, changes).catch((e: unknown) => e)
+
+  it('patches the input as JSON to /tickets/{id} and returns the ticket', async () => {
+    const fetchMock = respond(200, updated)
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(api.updateTicket(1, changes)).resolves.toEqual(updated)
+
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/tickets/1`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(changes),
+    })
+  })
+
+  it('turns a 400 with errors into field errors', async () => {
+    vi.stubGlobal(
+      'fetch',
+      respond(
+        400,
+        validationProblem({
+          title: ['Rubrik måste fyllas i'],
+          customerEmail: ['Ange en giltig e-postadress'],
+        }),
+        'application/problem+json',
+      ),
+    )
+
+    const error = await updateTicketError()
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({
+      status: 400,
+      fieldErrors: {
+        title: 'Rubrik måste fyllas i',
+        customerEmail: 'Ange en giltig e-postadress',
+      },
+    })
+  })
+
+  it.each([404, 500])('turns a %i into an error without field errors', async (status) => {
+    const problem: ProblemDetails = { title: 'Request failed', status }
+    vi.stubGlobal('fetch', respond(status, problem, 'application/problem+json'))
+
+    const error = await updateTicketError()
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status, fieldErrors: undefined })
+  })
+
+  it('turns a network failure into an error without field errors', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    const error = await updateTicketError()
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 0, fieldErrors: undefined })
   })
 })

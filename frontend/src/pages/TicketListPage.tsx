@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useLocation } from 'react-router-dom'
 import { api } from '../api/client'
 import TicketDetailsPanel from '../components/TicketDetailsPanel'
 import TicketStatusIcon from '../components/TicketStatusIcon'
+import EditTicketForm, { type EditTicketFormHandle } from '../features/edit-ticket/EditTicketForm'
+import UnsavedChangesDialog from '../features/edit-ticket/UnsavedChangesDialog'
 import TicketHistory from '../features/ticket-detail/TicketHistory'
 import StatusForm from '../features/ticket-detail/StatusForm'
 import {
@@ -54,6 +57,18 @@ export default function TicketListPage() {
   const [focusedRowId, setFocusedRowId] = useState<number | null>(null)
   const [dismissedTimestampId, setDismissedTimestampId] = useState<number | null>(null)
   const activeTimestampId = hoveredDateId ?? focusedRowId
+
+  const [editing, setEditing] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [pendingTicketId, setPendingTicketId] = useState<number | null>(null)
+  const [editConfirmation, setEditConfirmation] = useState('')
+  const editButtonRef = useRef<HTMLButtonElement>(null)
+  const editFormRef = useRef<EditTicketFormHandle>(null)
+  const lastFocusedFieldRef = useRef<HTMLElement | null>(null)
+  // The ticket whose form is open, so a save that finishes after the form closed is recognised.
+  const editingTicketIdRef = useRef<number | null>(null)
+  // The ticket to show after a save started from the dialog's "Spara".
+  const selectAfterSaveRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (activeTimestampId === null) return
@@ -128,6 +143,91 @@ export default function TicketListPage() {
     )
   }
 
+  // Updates the list, and the panel only if it still shows the ticket.
+  const applySavedTicket = (savedTicket: Ticket) => {
+    setSelectedTicketResult((current) =>
+      current?.id === savedTicket.id
+        ? { id: savedTicket.id, status: 'loaded', ticket: savedTicket }
+        : current,
+    )
+    setState((current) =>
+      current.status === 'loaded'
+        ? {
+            ...current,
+            tickets: current.tickets.map((ticket) =>
+              ticket.id === savedTicket.id ? savedTicket : ticket,
+            ),
+          }
+        : current,
+    )
+  }
+
+  const closeEditor = () => {
+    editingTicketIdRef.current = null
+    setEditing(false)
+    setIsDirty(false)
+  }
+
+  const startEditing = (ticket: Ticket) => {
+    editingTicketIdRef.current = ticket.id
+    setEditConfirmation('')
+    setEditing(true)
+  }
+
+  const handleEditSaved = (savedTicket: Ticket) => {
+    if (editingTicketIdRef.current !== savedTicket.id) {
+      applySavedTicket(savedTicket) // The form was closed while saving.
+      return
+    }
+    const nextTicketId = selectAfterSaveRef.current
+    selectAfterSaveRef.current = null
+    flushSync(() => {
+      applySavedTicket(savedTicket)
+      closeEditor()
+      setEditConfirmation('Ärendet har uppdaterats.')
+      if (nextTicketId !== null) setSelectedTicketId(nextTicketId) // AK-10 "Spara".
+    })
+    if (nextTicketId === null) editButtonRef.current?.focus() // AK-9
+  }
+
+  const handleEditCancel = () => {
+    flushSync(closeEditor)
+    editButtonRef.current?.focus() // AK-8
+  }
+
+  const selectTicket = (ticketId: number) => {
+    if (ticketId === selectedTicketId) return
+    if (editing && isDirty) {
+      setPendingTicketId(ticketId) // AK-10: ask first.
+      return
+    }
+    if (editing) closeEditor() // AK-11
+    setEditConfirmation('')
+    setSelectedTicketId(ticketId)
+  }
+
+  const handleDialogSave = async () => {
+    const nextTicketId = pendingTicketId
+    setPendingTicketId(null)
+    selectAfterSaveRef.current = nextTicketId
+    const result = await editFormRef.current?.save()
+    // Not saved: stay on the old ticket in edit mode. The form shows the errors (AK-2, AK-12).
+    if (result?.kind !== 'saved') selectAfterSaveRef.current = null
+  }
+
+  const handleDialogDiscard = () => {
+    const nextTicketId = pendingTicketId
+    setPendingTicketId(null)
+    closeEditor()
+    setEditConfirmation('')
+    if (nextTicketId !== null) setSelectedTicketId(nextTicketId)
+  }
+
+  const handleDialogContinue = () => {
+    setPendingTicketId(null)
+    lastFocusedFieldRef.current?.focus()
+  }
+
   return (
     <div>
       <h1 className="mb-5 text-2xl font-bold text-white" id="ticket-list-title">Ärenden</h1>
@@ -181,7 +281,7 @@ export default function TicketListPage() {
                       setDismissedTimestampId(null)
                     }}
                     onBlur={() => setFocusedRowId(null)}
-                    onClick={() => setSelectedTicketId(ticket.id)}
+                    onClick={() => selectTicket(ticket.id)}
                   >
                     <span className="flex items-center justify-between gap-2.5">
                       <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-teal">
@@ -271,6 +371,13 @@ export default function TicketListPage() {
           className="min-w-0 overflow-hidden rounded-[7px] border border-line bg-portal/80"
           aria-labelledby="ticket-details-title"
         >
+          {/* Always rendered, so screen readers announce the confirmation (AK-9). */}
+          <p
+            role="status"
+            className={editConfirmation ? 'border-b border-line px-5 py-3 text-sm text-[#86EFAC]' : ''}
+          >
+            {editConfirmation}
+          </p>
           <TicketDetailsPanel
             ticket={selectedTicket}
             emptyMessageRole={currentTicketResult?.status === 'failed' ? 'alert' : 'status'}
@@ -281,9 +388,30 @@ export default function TicketListPage() {
                   ? 'Ärendedetaljerna är inte tillgängliga.'
                   : 'Inget ärende valt.'
             }
+            onEdit={selectedTicket ? () => startEditing(selectedTicket) : undefined}
+            editButtonRef={editButtonRef}
+            editForm={
+              editing && selectedTicket ? (
+                <div
+                  onFocus={(event) => {
+                    lastFocusedFieldRef.current = event.target
+                  }}
+                >
+                  <EditTicketForm
+                    key={selectedTicket.id}
+                    ref={editFormRef}
+                    ticket={selectedTicket}
+                    onSaved={handleEditSaved}
+                    onCancel={handleEditCancel}
+                    onDirtyChange={setIsDirty}
+                  />
+                </div>
+              ) : undefined
+            }
           >
             {selectedTicket && (
               <>
+                {!editing && (
                 <section aria-labelledby="ticket-status-title">
                   <h2 id="ticket-status-title" className="text-sm font-semibold text-white">
                     Ändra status
@@ -294,11 +422,19 @@ export default function TicketListPage() {
                     onSaved={handleStatusSaved}
                   />
                 </section>
+                )}
                 <TicketHistory ticketId={selectedTicket.id} />
               </>
             )}
           </TicketDetailsPanel>
         </aside>
+        {pendingTicketId !== null && (
+          <UnsavedChangesDialog
+            onSave={() => void handleDialogSave()}
+            onDiscard={handleDialogDiscard}
+            onContinue={handleDialogContinue}
+          />
+        )}
       </div>
     </div>
   )

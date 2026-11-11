@@ -112,7 +112,7 @@ Ask before touching anything else.
 | Beslut 2 (strängar för kategori och prioritet) | Annars ger ett okänt värde ett JSON-fel utan fältkoppling. Det bryter mot AK-5. |
 | Beslut 3 (samma regelkod) | Registrera och redigera ska ge exakt samma felmeddelanden. Kopierade regler kan glida isär. |
 | Befintliga tester får inte ändras | Visar att registrera fortfarande fungerar efter en refaktorering. |
-| Beslut 4 (status ignoreras) | Statusändring är Linus moment och har en egen endpoint. |
+| Beslut 4 (status ignoreras) | Statusändring har en egen endpoint. |
 | Beslut 8 (ingen historikhändelse) | Ärendehistorikens spec säger att redigering hör till en kommande spec. |
 | Lista över filer | Andra i gruppen äger de andra endpoints. |
 | Röda tester först och sabotagekontroll | Teststrategin kräver det. Det visar att testerna kan falla. |
@@ -246,7 +246,7 @@ Varje test skapar sitt ärende via `POST /api/tickets`. "Oförändrat i database
 
 ## 3. Kontrollpunkter
 
-### Kontrollpunkt 1 (plan godkänd 2026-11-10)
+### Kontrollpunkt 1
 
 Svar från Carolina:
 1. Ny fil `Features/Tickets/TicketFieldRules.cs` för de gemensamma reglerna.
@@ -283,9 +283,30 @@ Integration (`dotnet test tests/CustomerService.Api.IntegrationTests`):
 statuskodspåståendet, med `Actual: NotImplemented` (501-stubben) i alla 18. Alla befintliga
 integrationstester är gröna, även `ListTicketsTests` efter rättningen.
 
+### Kontrollpunkt 3 (allt grönt)
+
+Agenten stannade efter slutrapporten i avsnitt 4. Inget var committat.
+
+Slutkörning enligt agenten (avsnitt 4):
+- `dotnet test CustomerService.slnx`: unit 98 passed, integration 57 passed.
+- Omgenerering av `openapi.json`: 0 varningar, 0 fel, byte-identisk vid andra körningen.
+- Sabotage (a)–(d): varje sabotage fick minst ett test att falla.
+- `CreateTicketValidatorTests.cs` oförändrad efter refaktoreringen till `TicketFieldRules.cs`.
+
+Min kontroll:
+- Jag körde `dotnet test` själv i `backend/`. Alla tester gick igenom, 98 unit och 57 integration, samma som agentens slutkörning:
+  ```text
+  Test summary: total: 155, failed: 0, succeeded: 155, skipped: 0, duration: 8,3s
+  Build succeeded in 10,9s
+  ```
+- Jag skummade diffen i `UpdateTicket.cs` och `TicketFieldRules.cs`, och litade på testerna och sabotagen för resten.
+- Jag frågade inte om något utöver svaren vid kontrollpunkterna, och ändrade inget innan commit.
+
+Committat av Carolina som `fad3f3e` ("Add backend for edit ticket").
+
 ## 4. Resultat
 
-Skrivet av Claude 2026-11-10. Inget är committat eller pushat.
+Skrivet av Claude 2026-11-10, före commit. Committat senare av Carolina som `fad3f3e`.
 
 ### Ändrade filer
 
@@ -346,9 +367,7 @@ Efter återställningen visade `git diff` bara de avsedda ändringarna, och slut
 - **Planens punkt 9 stämde inte helt.** `[EmailAddress]` gav inget `format: email` i den gamla
   `openapi.json`, så `customerEmail` ändrades inte där. Attributet är ändå borttaget, eftersom det
   inte är Felfall-regeln.
-- **`main` var trasigt** för integrationstesterna (`ListTicketsTests.cs`, CS9035) före detta
-  uppdrag. Backend CI på `main` lär ha fallit av det. Rättningen följer med denna branch; Linus bör
-  få veta, eftersom filen är hans.
+
 - **Sabotage (a) gav även fel i registrera-testerna**, eftersom regeln nu är gemensam. Det visar
   att båda endpoints använder samma kod, som beslut 3 kräver.
 - **Explicit `null` och saknat fält** går inte att skilja åt. Båda betyder "ändra inte", så det
@@ -360,3 +379,37 @@ Efter återställningen visade `git diff` bara de avsedda ändringarna, och slut
   körs i CI vid ändringar i backend.
 
 ## 5. Min granskning
+
+### Hur jag granskade
+
+- Jag svarade på agentens frågor vid kontrollpunkt 1 och godkände planen.
+- Vid kontrollpunkt 2 läste jag den röda körningen. Jag bestämde att `ListTicketsTests.cs` skulle rättas på denna branch, eftersom integrationstesterna inte kompilerade ens på `main`.
+- Jag läste slutrapporten vid kontrollpunkt 3.
+- Jag skummade diffen i `UpdateTicket.cs` och `TicketFieldRules.cs`, och litade på testerna och sabotagen för resten.
+- Jag körde `dotnet test` själv i terminalen och läste utskriften. Resultatet var detsamma som agentens slutkörning:
+  ```text
+  Test summary: total: 155, failed: 0, succeeded: 155, skipped: 0, duration: 8,3s
+  Build succeeded in 10,9s
+  ```
+
+Committat av mig som `fad3f3e` ("Add backend for edit ticket").
+
+### Accepterat, ändrat, avvisat
+
+| Förslag | Beslut | Varför |
+|---|---|---|
+| Gemensamma fältregler i en ny fil, `TicketFieldRules.cs` | Accepterat | Registrera och redigera ska ha exakt samma regler. Sabotage (a) gav fel i båda endpoints, så de använder samma kod. |
+| Validera före uppslag, så att ett ogiltigt anrop ger 400 även för ett okänt id | Accepterat, med en rad i `kontrakt.md` | Samma ordning som `PUT /status`. |
+| Ta bort det inaktuella stycket om internt ärendenummer i `kontrakt.md` | Accepterat | Det motsade avsnittet ovanför, där `ticketNumber` finns i alla svar. |
+| Test för att redigering inte skapar en historikhändelse | Accepterat och utökat | Gränsfallet står i specen. Jag bad också att `id`, `ticketNumber` och `createdAt` skickas i samma test som `status`. |
+| Uppdatera `backend/README.md` | Ändrat | Bara raden om 501-stubbar, inget mer. |
+
+
+### Vad jag ifrågasatte
+
+- Jag frågade inte om något utöver svaren vid kontrollpunkterna. Besluten jag tog där står i tabellen ovan.
+
+### Begränsningar som är kvar
+
+- Ett explicit `null` och ett saknat fält går inte att skilja åt. Båda betyder "ändra inte", så det går inte att nollställa ett fält med PATCH. Det är avsiktligt, eftersom alla sex fälten är obligatoriska.
+

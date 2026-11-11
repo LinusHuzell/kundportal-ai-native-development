@@ -118,6 +118,19 @@ Att följa upp:
 - When: Hen väljer ett annat ärende i listan
 - Then: Ingen dialog visas, och det nya ärendet visas direkt
 
+**AK-12**
+- Given: Ett eller flera fält bryter mot en regel i Felfall i registrera-ärende.md
+- When: Ändringen sparas
+- Then: Fokus flyttas till det första fältet med fel, i formulärets ordning
+
+**AK-13**
+- Given: Ändringen har skickats och svaret från servern har inte kommit
+- When: Hen väljer "Spara ändringar" igen
+- Then: Inget nytt anrop skickas
+
+AK-12 och AK-13 lades till 2026-11-10 av Carolina, med samma beteende som AK-11 och AK-12 i
+registrera-ärende.md.
+
 ## Beslut: byta ärende under redigering (2026-11-10)
 Alternativ som jämfördes:
 
@@ -139,6 +152,14 @@ inget har ändrats.
 - Maxlängd: rubrik 200 tecken, beskrivning 5000 tecken (samma som registrera-ärende.md).
 - Redigering skapar ingen händelse i ärendehistoriken. Det hör till en senare spec
   för ärendehistorik.
+
+## Beslut: sparning som pågår (2026-11-11)
+Frågorna kom från uppdrag B1 och beslutades av Carolina i uppdrag B2.
+
+1. "Avbryt" går inte att välja medan en sparning pågår.
+2. En sparning som blir klar efter att formuläret har stängts, till exempel efter "Släng ändringar",
+   uppdaterar listan och panelen med det sparade ärendet. Inget annat händer: fokus flyttas inte och
+   ingen bekräftelse visas.
 
 ## Verifieringsmetod
 - Automatiserade tester (happy path + error paths per rad i Felfall +
