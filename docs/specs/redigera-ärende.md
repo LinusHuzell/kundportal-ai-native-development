@@ -16,7 +16,7 @@ Momentet omfattar hela flödet: redigeringen i frontend och endpointen i backend
 - Fälten innehåller ärendets befintliga värden när redigeringen börjar
 - Samma fältvalidering som registrera-ärende, i både frontend och backend
 - Backend: endpoint `PATCH /api/tickets/{id}`
-- Felhantering när ärendet inte går att hitta
+- Felhantering när ärendet inte finns vid sparning (`404` från API:t, se AK-6)
 
 ## Ingår inte
 - Statusändring (eget moment, se arbetsfördelning i avgränsningar.md)
@@ -43,8 +43,9 @@ Att följa upp:
 1. Fråga Linus om detaljpanelen kan visa redigeringskomponenten.
 2. ~~Fråga gruppen om vem som bygger redigeringen (Carolina eller Linus).~~
    Besvarad 2026-11-10: Carolina bygger den, inklusive knappen.
-3. Fråga Linus om AK-3 (ärendet finns inte) hör till detaljpanelen eller
-   till detta moment, eftersom ingen egen redigeringsvy finns.
+3. ~~Fråga Linus om AK-3 (ärendet finns inte) hör till detaljpanelen eller
+   till detta moment, eftersom ingen egen redigeringsvy finns.~~
+   Besvarad 2026-11-11: detaljpanelen. Se AK-3.
 4. Uppdatera specen och acceptanskriterierna efter svaren.
 
 ## Acceptanskriterier
@@ -62,11 +63,18 @@ Att följa upp:
 - Then: Felmeddelandet från tabellen visas kopplat till fältet via
   aria-describedby, och ärendets tidigare värden behålls oförändrade
 
-**AK-3**
-- Given: Det finns inget ärende med angivet id (t.ex. ett felskrivet
-  eller påhittat id i URL:en)
-- When: Ärendet öppnas
-- Then: "Ärendet kunde inte hittas" visas, och inga redigerbara fält visas
+**AK-3** (utanför detta moment, beslut 2026-11-11)
+- Ett ärende som inte finns kan inte öppnas i redigeringsläge. "Redigera"
+  finns bara när detaljpanelen visar ett ärende som har laddats.
+- Vad som händer när ett ärende inte finns ägs av detaljpanelen, se
+  [visa-ärende-och-ändra-status.md](./visa-ärende-och-ändra-status.md),
+  "Regler och fel":
+  - En okänd äldre detaljlänk (`/tickets/{id}`) öppnar startsidan med listans normala val.
+  - Om detaljerna inte kan hämtas visas "Ärendedetaljerna är inte tillgängliga."
+- Den tidigare texten "Ärendet kunde inte hittas" byggdes inte. Den skrevs innan
+  detaljvyn blev en panel, och den skulle motsäga visa-specen.
+- Om ärendet tas bort under redigering ger sparningen `404` (AK-6), och
+  formuläret visar "Ärendet kunde inte sparas. Försök igen."
 
 ### API (backend)
 
@@ -163,6 +171,6 @@ Frågorna kom från uppdrag B1 och beslutades av Carolina i uppdrag B2.
 
 ## Verifieringsmetod
 - Automatiserade tester (happy path + error paths per rad i Felfall +
-  ärende-finns-inte)
+  `404` vid sparning)
 - Backend-tester (API) för validering, uppdatering och 404 när id saknas
 - Playwright end-to-end-test för redigeringsflödet
