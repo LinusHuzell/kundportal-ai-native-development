@@ -1,6 +1,7 @@
 import { useId, useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { api } from '../../api/client'
+import SaveIcon from '../../components/SaveIcon'
 import { STATUS_LABELS, TICKET_STATUSES, type Ticket, type TicketStatus } from '../../types/ticket'
 
 const CHOOSE_NEW_STATUS = 'Välj en ny status'
@@ -87,8 +88,9 @@ export default function StatusForm({ ticket, onSaved }: Props) {
       <button
         type="submit"
         aria-disabled={saving ? true : undefined}
-        className="rounded-md bg-[#2FB1A5] px-4 py-2 text-sm font-semibold text-[#0F1C2E] hover:bg-[#4CC5BA] focus:ring-2 focus:ring-[#2FB1A5] focus:ring-offset-2 focus:ring-offset-[#16283D] focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:bg-white/10 aria-disabled:text-[#AAB6C5]"
+        className="inline-flex items-center gap-2 rounded-md bg-[#2FB1A5] px-4 py-2 text-sm font-semibold text-[#0F1C2E] hover:bg-[#4CC5BA] focus:ring-2 focus:ring-[#2FB1A5] focus:ring-offset-2 focus:ring-offset-[#16283D] focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:bg-white/10 aria-disabled:text-[#AAB6C5]"
       >
+        <SaveIcon className="size-4 shrink-0" />
         {saving ? 'Sparar…' : 'Spara status'}
       </button>
 

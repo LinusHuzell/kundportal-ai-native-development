@@ -40,8 +40,9 @@ const history = (page: Page) => main(page).getByRole('region', { name: 'Historik
 const statusSelect = (page: Page) => main(page).getByRole('combobox', { name: 'Status' })
 
 async function openTicket(page: Page, ticket: Ticket) {
-  await page.goto(`/tickets/${ticket.id}`)
-  await expect(main(page).getByRole('heading', { level: 1, name: ticket.title })).toBeVisible()
+  await page.goto('/tickets')
+  await main(page).getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` }).click()
+  await expect(main(page).getByRole('heading', { level: 3, name: ticket.title })).toBeVisible()
 }
 
 test('AK-6: the registered event is shown with its normalized datetime', async ({ page, request }) => {
@@ -57,13 +58,26 @@ test('AK-6: the registered event is shown with its normalized datetime', async (
   await expect(time).toHaveAttribute('datetime', new Date(ticket.createdAt).toISOString())
 })
 
-test('D-1: an unknown ticket has no history section', async ({ page }) => {
+test('AK-20: the homepage selected-ticket panel includes status and history', async ({
+  page,
+  request,
+}) => {
+  const ticket = await createTicket(request)
+
+  await page.goto('/tickets')
+  await main(page)
+    .getByRole('button', { name: `${ticket.ticketNumber}: ${ticket.title}` })
+    .click()
+
+  await expect(main(page).getByRole('combobox', { name: 'Status' })).toHaveValue(ticket.status)
+  await expect(history(page).getByRole('listitem')).toContainText('Ärendet registrerades')
+})
+
+test('D-1: an unknown legacy ticket URL redirects to the list', async ({ page }) => {
   await page.goto('/tickets/2147483647')
 
-  await expect(
-    main(page).getByRole('heading', { level: 1, name: 'Ärendet hittades inte' }),
-  ).toBeVisible()
-  await expect(history(page)).toHaveCount(0)
+  await expect(page).toHaveURL(/\/tickets$/)
+  await expect(main(page).getByRole('heading', { name: 'Ärenden', exact: true })).toBeVisible()
 })
 
 test('D-6: saving a status does not fetch the history again', async ({ page, request }) => {
