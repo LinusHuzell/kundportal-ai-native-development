@@ -1,30 +1,32 @@
 # Spec: Ärendehistorik i den valda ärendepanelen
 
 **Ägare:** Sebastian  
-**Senast uppdaterad:** 2026-11-10
+**Senast uppdaterad:** 2026-11-12
 
 ## Sammanfattning
 
-Visa ärendets registreringshändelse i historiksektionen på startsidans valda ärendepanel. Ändringen omfattar frontend och frontendtester; backend och API-kontraktet ändras inte.
+Den här specen beskriver den befintliga presentationen av registreringshändelsen (`Created`) i startsidans valda ärendepanel. Statusändringar visas också i historiken enligt [specifikationen för statusändringar](ärendehistorik-statusändringar.md), som äger de nya händelse- och API-kraven.
 
 Arbetssättet från spec till kod beskrivs i [arbetssätt](../arbetssätt.md).
 
 ## Mål
 
 - Handläggaren ser när det valda ärendet registrerades.
+- Handläggaren kan se statusändringar enligt [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
 - Tom historik och hämtningsfel har tydliga tillstånd.
 - Statusformuläret och ärendets uppgifter fungerar även när historiken inte kan hämtas.
 
 ## Ingår
 
 - Presentation av `Created`, inklusive tidpunkt, på `/tickets`.
+- Presentation av `StatusChanged` enligt [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
 - Laddningstillstånd, tomtillstånd och felmeddelande.
 - Historik hämtas för det valda ärendet; svar för tidigare val ignoreras.
 
 ## Ingår inte
 
-- Historikhändelser för statusändringar eller redigering.
-- Ändringar av backend, databas eller API-kontrakt.
+- Händelser för redigering.
+- Backend-, databas- och API-ändringar för `StatusChanged`; de ägs av [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
 - Knapp för att försöka hämta historiken igen. Handläggaren laddar om sidan.
 
 ## Användare och förutsättningar
@@ -37,7 +39,8 @@ Arbetssättet från spec till kod beskrivs i [arbetssätt](../arbetssätt.md).
 
 | Begrepp/fält | Betydelse | Tillåtna värden eller källa |
 |---|---|---|
-| `type` | Händelsetyp | `Created`. Fler värden kan tillkomma |
+| `type` | Händelsetyp | `Created` och `StatusChanged`; den senare definieras i [specifikationen för statusändringar](ärendehistorik-statusändringar.md) |
+| `fromStatus`, `toStatus` | Tidigare och ny status i en statusändringshändelse | Svenska statusetiketter enligt [specifikationen för statusändringar](ärendehistorik-statusändringar.md) |
 | `occurredAt` | Händelsens tidpunkt | ISO 8601, UTC |
 | Tidpunkt | Hur `occurredAt` visas | Svenskt datum och klockslag i webbläsarens tidszon |
 
@@ -48,10 +51,11 @@ Arbetssättet från spec till kod beskrivs i [arbetssätt](../arbetssätt.md).
 | Inget ärende är valt | Ingen historik visas | Panelens tomtillstånd visas |
 | Historiken laddas | Svaret har inte kommit | "Laddar historik…" visas i historiksektionen |
 | Händelser finns | Visa i API:ts ordning | `Created` visas som "Ärendet registrerades" med tidpunkt |
+| Statusändring finns | Visa i API:ts ordning | Texten följer formatet och statusetiketterna i [specifikationen för statusändringar](ärendehistorik-statusändringar.md) |
 | Okänd `type` | Händelsen visas inte | Övriga kända händelser visas; om inga återstår visas tomtillståndet |
 | Tom historik (`[]`) | Ingen lista visas | "Det finns inga händelser för ärendet." |
 | Historikanrop misslyckas | Visa ingen lista | "Historiken kunde inte hämtas. Försök igen."; ärendeuppgifter och statusformulär fungerar |
-| Status sparas | Historiken hämtas inte igen | Historiken är oförändrad |
+| Status sparas | Efter en lyckad faktisk statusändring hämtar panelen historiken om | Den nya händelsen visas utan sidomladdning eller navigering, enligt [specifikationen för statusändringar](ärendehistorik-statusändringar.md) |
 | Ett annat ärende väljs | Ignorera svar för tidigare val | Endast aktuellt ärendes historik visas |
 
 ## Acceptanskriterier
@@ -87,7 +91,7 @@ Arbetssättet från spec till kod beskrivs i [arbetssätt](../arbetssätt.md).
 
 - **Endpoint/händelse:** Befintligt `GET /api/tickets/{id}/history`.
 - **Inkommande data:** `id` i sökvägen.
-- **Lyckat svar:** `200` med händelser nyast först eller `[]`.
+- **Lyckat svar:** `200` med händelser nyast först eller `[]`; statusändringens fält definieras i [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
 - **Fel:** `404` `problem+json` för okänt ärende; alla fel ger samma frontendmeddelande.
 - **Beständighet:** Frontend sparar inga historikhändelser.
 - **Källor:** [API-kontrakt](../api/kontrakt.md) och [grundspecifikation](ärendehistorik-grund.md).
@@ -107,7 +111,7 @@ Arbetssättet från spec till kod beskrivs i [arbetssätt](../arbetssätt.md).
 | D-3 | Tomtillståndets text är "Det finns inga händelser för ärendet." | Ärenden kan sakna historik | Sebastian | Beslutat |
 | D-4 | Händelser med okänd `type` visas inte | Framtida typer ska inte ge felaktig text eller krascha klienten | Sebastian | Beslutat |
 | D-5 | Alla misslyckade historikanrop ger samma felmeddelande | Ärendet finns redan i den laddade listan | Sebastian | Beslutat |
-| D-6 | Endast `Created` visas; status sparas utan att hämta om historiken | Statushistorik ingår inte i denna ändring | Sebastian | Beslutat |
+| D-6 | Den ursprungliga leveransen visar `Created`; statusändringar och deras uppdateringsbeteende ägs av [specifikationen för statusändringar](ärendehistorik-statusändringar.md) | Håller ursprungliga kriterier åtskilda från utökningen | Sebastian | Beslutat |
 
 ## Verifiering
 
@@ -121,12 +125,19 @@ Följ projektets [teststrategi](../teststrategi.md).
 | AK-11 | Fördröjt historiksvar | E2E, mockat API | Automatisk |
 | AK-12 | Okänd och känd händelse samtidigt | E2E, mockat API | Automatisk |
 | D-1 | Byt valt ärende under pågående historikanrop och kontrollera aktuellt resultat | Kodgranskning | Manuell |
-| D-6 | Spara status och kontrollera att inget nytt historikanrop görs | E2E, full stack | Automatisk |
+| AK-7 i [specifikationen för statusändringar](ärendehistorik-statusändringar.md) | Spara en ny status och kontrollera att historiken hämtas om och den nya händelsen visas utan sidomladdning | E2E, full stack | Automatisk |
 | Tillgänglighet | Rubrik, lista, `time` och live-regioner kontrolleras med skärmläsare | Manuell kontroll | Manuell |
 
 ## Referenser
 
 - [Ärendehistorik, grund](ärendehistorik-grund.md)
+- [Ärendehistorik för statusändringar](ärendehistorik-statusändringar.md)
 - [Visa ärende och ändra status](visa-ärende-och-ändra-status.md)
 - [API-kontrakt](../api/kontrakt.md)
 - [Specmall](_mall.md), [arbetssätt](../arbetssätt.md) och [teststrategi](../teststrategi.md)
+
+## Ändringshistorik
+
+| Datum | Ändring | Ansvarig |
+|---|---|---|
+| 2026-11-12 | Samordnade presentationen med statusändringsspecen; efter lyckad statussparning hämtas historiken om och den nya händelsen visas direkt | Sebastian |

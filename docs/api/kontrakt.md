@@ -68,7 +68,7 @@ med exakt skiftläge. `New` går aldrig att sätta. Samma status som ärendet re
 
 ### TicketEvent
 
-En händelse i ett ärendes historik. Bara `type` och `occurredAt` returneras.
+En händelse i ett ärendes historik. `type` och `occurredAt` returneras alltid. `fromStatus` och `toStatus` returneras bara för `StatusChanged`.
 
 ```json
 {
@@ -77,7 +77,18 @@ En händelse i ett ärendes historik. Bara `type` och `occurredAt` returneras.
 }
 ```
 
-`type` är för närvarande alltid `Created`. Fler värden läggs till senare. `occurredAt` är serverns tid i UTC.
+```json
+{
+  "type": "StatusChanged",
+  "occurredAt": "2026-11-11T09:30:00Z",
+  "fromStatus": "Pågående",
+  "toStatus": "Väntar på kund"
+}
+```
+
+`type` är `Created` eller `StatusChanged`. `fromStatus` och `toStatus` är svenska etiketter, inte enum-värden: `Nytt`, `Pågående`, `Väntar på kund`, `Avslutat`. `occurredAt` är serverns tid i UTC.
+
+`PUT /tickets/{id}/status` skapar en `StatusChanged`-händelse när en annan status sparas, i samma transaktion som statusändringen. Samma status igen, avvisade anrop och okända ärenden skapar ingen händelse. Äldre statusändringar rekonstrueras inte.
 
 ## Endpoints
 
@@ -129,10 +140,7 @@ Regler och felmeddelanden för `PUT /tickets/{id}/status` kommer från tabellen 
 | `status` | `New` | Status kan inte ändras till Nytt |
 | `status` | Saknas, tomt eller okänt värde (även fel skiftläge) | Välj en giltig status |
 Vid sparning sätts `status` till `New` och `createdAt` till serverns tid i UTC. Ärendet får också
-ett internt ärendenummer, `SR-<år>-<1000 + id>`, som inte finns i API:t.
-
-Vid sparning skapas också en `Created`-händelse med samma tidpunkt som `createdAt`. Ärendet och
-händelsen sparas i samma transaktion.
+ett internt ärendenummer, `SR-<år>-<1000 + id>`, som inte finns i API:t. Dessutom skapas en `Created`-händelse med samma tidpunkt som `createdAt`. Ärendet och händelsen sparas i samma transaktion.
 
 ## Historik
 

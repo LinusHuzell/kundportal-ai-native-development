@@ -2,7 +2,12 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+
+using CustomerService.Api.Data;
+using CustomerService.Api.Features.Tickets;
+
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace CustomerService.Api.IntegrationTests.Features.Tickets;
 
@@ -42,6 +47,13 @@ public sealed class UpdateTicketStatusTests(ApiFixture fixture) : IntegrationTes
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("InProgress", (await GetTicketAsync(id)).GetProperty("status").GetString());
         return id;
+    }
+
+    private async Task<JsonElement[]> GetHistoryAsync(int id)
+    {
+        var response = await Fixture.Factory.CreateClient().GetAsync($"/api/tickets/{id}/history");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray().ToArray();
     }
 
     private static async Task AssertStatusErrorAsync(HttpResponseMessage response, string message)
@@ -113,6 +125,118 @@ public sealed class UpdateTicketStatusTests(ApiFixture fixture) : IntegrationTes
 
         await AssertStatusErrorAsync(response, "Välj en giltig status");
         Assert.Equal("New", (await GetTicketAsync(id)).GetProperty("status").GetString());
+    }
+
+    // Status-change history, AK-1 to AK-4 and AK-6 in docs/specs/ärendehistorik-statusändringar.md.
+    [Fact]
+    public async Task ChangedStatusAddsStatusChangedEventWithSwedishLabels()
+    {
+        var id = await CreateTicketAsync();
+        var before = DateTimeOffset.UtcNow;
+
+        await PutStatusAsync(id, """{"status":"WaitingForCustomer"}""");
+
+        var statusChanged = Assert.Single(
+            await GetHistoryAsync(id), e => e.GetProperty("type").GetString() == "StatusChanged");
+        Assert.Equal("Nytt", statusChanged.GetProperty("fromStatus").GetString());
+        Assert.Equal("Väntar på kund", statusChanged.GetProperty("toStatus").GetString());
+        var occurredAt = statusChanged.GetProperty("occurredAt").GetDateTimeOffset();
+        Assert.InRange(occurredAt, before.AddSeconds(-1), DateTimeOffset.UtcNow.AddSeconds(1));
+    }
+
+    [Theory]
+    [InlineData("InProgress", "Pågående")]
+    [InlineData("Closed", "Avslutat")]
+    public async Task EachTargetStatusIsReportedWithItsSwedishLabel(string status, string label)
+    {
+        var id = await CreateTicketAsync();
+
+        await PutStatusAsync(id, $$"""{"status":"{{status}}"}""");
+
+        var statusChanged = Assert.Single(
+            await GetHistoryAsync(id), e => e.GetProperty("type").GetString() == "StatusChanged");
+        Assert.Equal(label, statusChanged.GetProperty("toStatus").GetString());
+    }
+
+    [Fact]
+    public async Task StatusAndStatusChangedEventArePersistedTogetherWithTheSameTimestamp()
+    {
+        var id = await CreateTicketAsync();
+
+        await PutStatusAsync(id, """{"status":"Closed"}""");
+
+        await using var dbContext = Fixture.CreateDbContext();
+        var ticket = await dbContext.Tickets.SingleAsync(t => t.Id == id);
+        var events = await dbContext.TicketEvents.Where(e => e.TicketId == id).ToListAsync();
+        Assert.Equal(TicketStatus.Closed, ticket.Status);
+        Assert.Equal(2, events.Count);
+        var statusChanged = Assert.Single(events, e => e.Type.ToString() == "StatusChanged");
+        Assert.True(statusChanged.OccurredAt >= ticket.CreatedAt);
+        Assert.Equal(ticket.CreatedAt, events.Single(e => e.Type == TicketEventType.Created).OccurredAt);
+    }
+
+    [Fact]
+    public async Task SameStatusAddsNoStatusChangedEvent()
+    {
+        var id = await CreateTicketWithStatusInProgressAsync();
+
+        await PutStatusAsync(id, """{"status":"InProgress"}""");
+
+        var history = await GetHistoryAsync(id);
+        Assert.Single(history, e => e.GetProperty("type").GetString() == "StatusChanged");
+    }
+
+    [Fact]
+    public async Task RejectedStatusAddsNoStatusChangedEvent()
+    {
+        var id = await CreateTicketAsync();
+
+        await PutStatusAsync(id, """{"status":"New"}""");
+        await PutStatusAsync(id, """{"status":"Foo"}""");
+
+        var history = await GetHistoryAsync(id);
+        Assert.Equal(["Created"], history.Select(e => e.GetProperty("type").GetString()));
+    }
+
+    [Fact]
+    public async Task UnknownTicketCreatesNoEvent()
+    {
+        await PutStatusAsync(999, """{"status":"InProgress"}""");
+
+        await using var dbContext = Fixture.CreateDbContext();
+        Assert.Empty(await dbContext.TicketEvents.ToListAsync());
+    }
+
+    [Fact]
+    public async Task HistoryListsStatusChangesNewestFirstBeforeCreated()
+    {
+        var id = await CreateTicketAsync();
+        await PutStatusAsync(id, """{"status":"InProgress"}""");
+        await PutStatusAsync(id, """{"status":"Closed"}""");
+
+        var history = await GetHistoryAsync(id);
+
+        Assert.Equal(
+            ["StatusChanged", "StatusChanged", "Created"],
+            history.Select(e => e.GetProperty("type").GetString()));
+        Assert.Equal("Avslutat", history[0].GetProperty("toStatus").GetString());
+        Assert.Equal("Pågående", history[1].GetProperty("toStatus").GetString());
+    }
+
+    [Fact]
+    public async Task StatusChangedEventHasTypeTimestampAndStatusFieldsAndCreatedKeepsItsShape()
+    {
+        var id = await CreateTicketAsync();
+        await PutStatusAsync(id, """{"status":"InProgress"}""");
+
+        var history = await GetHistoryAsync(id);
+
+        Assert.Equal(
+            ["fromStatus", "occurredAt", "toStatus", "type"],
+            history[0].EnumerateObject().Select(p => p.Name).Order());
+        Assert.Equal(
+            ["occurredAt", "type"],
+            history[1].EnumerateObject().Select(p => p.Name).Order());
     }
 
     [Fact]

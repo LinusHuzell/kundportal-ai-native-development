@@ -3,6 +3,7 @@
 ## Workflow
 
 Work spec-driven: follow [docs/arbetssätt.md](docs/arbetssätt.md) (Swedish) and write specs from [docs/specs/_mall.md](docs/specs/_mall.md).
+Record every decision made while creating or iterating a specification in that specification file's `Ändringshistorik`, including the date, a short description, and the responsible person.
 
 ## Testing
 
