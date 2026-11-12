@@ -14,4 +14,7 @@ public class Ticket
     public required string CustomerName { get; set; }
     public required string CustomerEmail { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+    public const int TitleMaxLength = 200;
+    public const int DescriptionMaxLength = 5000;
+
 }

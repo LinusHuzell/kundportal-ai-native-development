@@ -10,8 +10,8 @@ namespace CustomerService.Api.Features.Tickets;
 // instead of a JSON error. The attributes only document the contract in OpenAPI;
 // CreateTicketValidator enforces the rules.
 public record CreateTicketRequest(
-    [property: Required, MaxLength(200)] string? Title,
-    [property: Required, MaxLength(5000)] string? Description,
+    [property: Required, MaxLength(Ticket.TitleMaxLength)] string? Title,
+    [property: Required, MaxLength(Ticket.DescriptionMaxLength)] string? Description,
     [property: Required] string? Category,
     [property: Required] string? Priority,
     [property: Required] string? CustomerName,

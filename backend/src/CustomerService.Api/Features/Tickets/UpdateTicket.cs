@@ -8,8 +8,8 @@ namespace CustomerService.Api.Features.Tickets;
 // unknown value gets a field error instead of a JSON error. The attributes only document the
 // contract in OpenAPI; UpdateTicketValidator enforces the rules.
 public record UpdateTicketRequest(
-    [property: MaxLength(200)] string? Title = null,
-    [property: MaxLength(5000)] string? Description = null,
+    [property: MaxLength(Ticket.TitleMaxLength)] string? Title = null,
+    [property: MaxLength(Ticket.DescriptionMaxLength)] string? Description = null,
     string? Category = null,
     string? Priority = null,
     string? CustomerName = null,

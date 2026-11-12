@@ -1,20 +1,23 @@
 using System.Text.RegularExpressions;
 
+using CustomerService.Api.Data;
+
 namespace CustomerService.Api.Features.Tickets;
 
 // Rules and messages come from the Felfall table in docs/specs/registrera-ärende.md.
 // Shared by CreateTicketValidator and UpdateTicketValidator. Each method returns the error
 // message for the value, or null if the value is valid. Values are not trimmed.
+// The length limits are constants on Ticket.
 public static partial class TicketFieldRules
 {
     public static string? Title(string? value) =>
         string.IsNullOrWhiteSpace(value) ? "Rubrik måste fyllas i"
-        : value.Length > 200 ? "Rubrik får vara högst 200 tecken"
+        : value.Length > Ticket.TitleMaxLength ? $"Rubrik får vara högst {Ticket.TitleMaxLength} tecken"
         : null;
 
     public static string? Description(string? value) =>
         string.IsNullOrWhiteSpace(value) ? "Beskrivning måste fyllas i"
-        : value.Length > 5000 ? "Beskrivning får vara högst 5000 tecken"
+        : value.Length > Ticket.DescriptionMaxLength ? $"Beskrivning får vara högst {Ticket.DescriptionMaxLength} tecken"
         : null;
 
     public static string? Category(string? value) =>
