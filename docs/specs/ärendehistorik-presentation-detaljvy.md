@@ -5,7 +5,7 @@
 
 ## Sammanfattning
 
-Den här specen beskriver den befintliga presentationen av registreringshändelsen (`Created`) i startsidans valda ärendepanel. Statusändringar visas också i historiken enligt [specifikationen för statusändringar](ärendehistorik-statusändringar.md), som äger de nya händelse- och API-kraven.
+Den här specen beskriver presentationen av registreringshändelsen (`Created`) och historikens gemensamma laddnings-, tom- och feltillstånd i startsidans valda ärendepanel. Statusändringarnas presentation beskrivs i [specifikationen för presentation av statusändringar](ärendehistorik-statusändringar-presentation.md); händelse- och API-kraven ägs av [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
 
 Arbetssättet från spec till kod beskrivs i [arbetssätt](../arbetssätt.md).
 
@@ -19,7 +19,7 @@ Arbetssättet från spec till kod beskrivs i [arbetssätt](../arbetssätt.md).
 ## Ingår
 
 - Presentation av `Created`, inklusive tidpunkt, på `/tickets`.
-- Presentation av `StatusChanged` enligt [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
+- Presentation av `StatusChanged` enligt [specifikationen för statusändringspresentation](ärendehistorik-statusändringar-presentation.md).
 - Laddningstillstånd, tomtillstånd och felmeddelande.
 - Historik hämtas för det valda ärendet; svar för tidigare val ignoreras.
 
@@ -51,7 +51,7 @@ Arbetssättet från spec till kod beskrivs i [arbetssätt](../arbetssätt.md).
 | Inget ärende är valt | Ingen historik visas | Panelens tomtillstånd visas |
 | Historiken laddas | Svaret har inte kommit | "Laddar historik…" visas i historiksektionen |
 | Händelser finns | Visa i API:ts ordning | `Created` visas som "Ärendet registrerades" med tidpunkt |
-| Statusändring finns | Visa i API:ts ordning | Texten följer formatet och statusetiketterna i [specifikationen för statusändringar](ärendehistorik-statusändringar.md) |
+| Statusändring finns | Visa i API:ts ordning | Texten följer formatet och statusetiketterna i [specifikationen för statusändringspresentation](ärendehistorik-statusändringar-presentation.md) |
 | Okänd `type` | Händelsen visas inte | Övriga kända händelser visas; om inga återstår visas tomtillståndet |
 | Tom historik (`[]`) | Ingen lista visas | "Det finns inga händelser för ärendet." |
 | Historikanrop misslyckas | Visa ingen lista | "Historiken kunde inte hämtas. Försök igen."; ärendeuppgifter och statusformulär fungerar |
@@ -111,7 +111,7 @@ Arbetssättet från spec till kod beskrivs i [arbetssätt](../arbetssätt.md).
 | D-3 | Tomtillståndets text är "Det finns inga händelser för ärendet." | Ärenden kan sakna historik | Sebastian | Beslutat |
 | D-4 | Händelser med okänd `type` visas inte | Framtida typer ska inte ge felaktig text eller krascha klienten | Sebastian | Beslutat |
 | D-5 | Alla misslyckade historikanrop ger samma felmeddelande | Ärendet finns redan i den laddade listan | Sebastian | Beslutat |
-| D-6 | Den ursprungliga leveransen visar `Created`; statusändringar och deras uppdateringsbeteende ägs av [specifikationen för statusändringar](ärendehistorik-statusändringar.md) | Håller ursprungliga kriterier åtskilda från utökningen | Sebastian | Beslutat |
+| D-6 | Den ursprungliga leveransen visar `Created`; presentation av statusändringar ägs av [specifikationen för statusändringspresentation](ärendehistorik-statusändringar-presentation.md), medan händelse- och API-beteendet ägs av [specifikationen för statusändringar](ärendehistorik-statusändringar.md) | Håller ursprungliga kriterier åtskilda från utökningen och skiljer frontendpresentation från backendbeteende | Sebastian | Beslutat |
 
 ## Verifiering
 
@@ -132,6 +132,7 @@ Följ projektets [teststrategi](../teststrategi.md).
 
 - [Ärendehistorik, grund](ärendehistorik-grund.md)
 - [Ärendehistorik för statusändringar](ärendehistorik-statusändringar.md)
+- [Presentation av statusändringar](ärendehistorik-statusändringar-presentation.md)
 - [Visa ärende och ändra status](visa-ärende-och-ändra-status.md)
 - [API-kontrakt](../api/kontrakt.md)
 - [Specmall](_mall.md), [arbetssätt](../arbetssätt.md) och [teststrategi](../teststrategi.md)
@@ -141,3 +142,4 @@ Följ projektets [teststrategi](../teststrategi.md).
 | Datum | Ändring | Ansvarig |
 |---|---|---|
 | 2026-11-12 | Samordnade presentationen med statusändringsspecen; efter lyckad statussparning hämtas historiken om och den nya händelsen visas direkt | Sebastian |
+| 2026-11-12 | D-6: Avgränsade statusändringsspecen till händelse- och API-beteende och hänvisade presentationen till den nya frontend-specifikationen | Sebastian |
