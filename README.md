@@ -4,7 +4,7 @@ A small customer service portal where a case handler can register a ticket, see 
 
 > The original course README (assignment setup, fork and PR instructions) is kept in [`course-info/README.md`](course-info/README.md).
 
-See [docs/gotchas.md](docs/gotchas.md) for development gotchas and team conventions.
+See [docs/dx/gotchas.md](docs/dx/gotchas.md) for development gotchas and team conventions.
 
 ## Team
 
@@ -50,3 +50,14 @@ Open http://localhost:5173.
 cd backend/
 dotnet run --project src/CustomerService.Api/CustomerService.Api.csproj --launch-profile https
 ```
+
+## Running the tests
+
+| What | Where | Command |
+|---|---|---|
+| Backend unit and integration (needs Docker) | `backend/` | `dotnet test CustomerService.slnx` |
+| Frontend lint, typecheck, unit, build | `frontend/` | `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` |
+| End-to-end, mocked API (once: `npx playwright install chromium`) | `frontend/` | `npm run test:e2e:mocked` |
+| End-to-end, full stack (needs Docker; once: `./scripts/setup-dev-cert.sh`) | repo root | `docker compose -f compose.test.yaml run --build --rm e2e`, then `docker compose -f compose.test.yaml down` |
+
+See [docs/teststrategi.md](docs/teststrategi.md) for which tests go where and why.
