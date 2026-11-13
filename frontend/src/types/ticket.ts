@@ -31,6 +31,9 @@ export interface Ticket {
 export interface TicketHistoryEvent {
   type: string
   occurredAt: string // ISO 8601
+  // Swedish labels, only for StatusChanged.
+  fromStatus?: string
+  toStatus?: string
 }
 
 export type CreateTicketInput = Omit<Ticket, 'id' | 'ticketNumber' | 'status' | 'createdAt'>

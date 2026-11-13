@@ -16,6 +16,12 @@ public sealed class TicketEventConfiguration : IEntityTypeConfiguration<TicketEv
             .IsRequired();
         builder.Property(ticketEvent => ticketEvent.OccurredAt)
             .IsRequired();
+        builder.Property(ticketEvent => ticketEvent.FromStatus)
+            .HasConversion<string>()
+            .HasMaxLength(32);
+        builder.Property(ticketEvent => ticketEvent.ToStatus)
+            .HasConversion<string>()
+            .HasMaxLength(32);
 
         builder.HasOne<Ticket>()
             .WithMany()

@@ -75,7 +75,7 @@ Run the solution's tests from the `backend` directory:
 dotnet test CustomerService.slnx
 ```
 
-The solution contains a unit-test project and an integration-test project. Integration tests run the API against Postgres in a container, so Docker must be running. See [AGENTS.md](../AGENTS.md) and [docs/teststrategi.md](../docs/teststrategi.md) for the test strategy.
+The solution contains a unit-test project and an integration-test project. See the [integration test README](tests/CustomerService.Api.IntegrationTests/README.md) for its focused run command and Testcontainers setup. Shared testing rules are documented in [AGENTS.md](../AGENTS.md) and [docs/teststrategi.md](../docs/teststrategi.md).
 
 ## Project layout
 

@@ -430,7 +430,8 @@
       },
       "TicketEventType": {
         "enum": [
-          "Created"
+          "Created",
+          "StatusChanged"
         ]
       },
       "TicketHistoryEventResponse": {
@@ -446,6 +447,18 @@
           "occurredAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "fromStatus": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "toStatus": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

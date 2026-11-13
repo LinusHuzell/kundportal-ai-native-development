@@ -82,7 +82,7 @@ med exakt skiftläge. `New` går aldrig att sätta. Samma status som ärendet re
 
 ### TicketEvent
 
-En händelse i ett ärendes historik. Bara `type` och `occurredAt` returneras.
+En händelse i ett ärendes historik. `type` och `occurredAt` returneras alltid. `fromStatus` och `toStatus` returneras bara för `StatusChanged`.
 
 ```json
 {
@@ -91,7 +91,18 @@ En händelse i ett ärendes historik. Bara `type` och `occurredAt` returneras.
 }
 ```
 
-`type` är för närvarande alltid `Created`. Fler värden läggs till senare. `occurredAt` är serverns tid i UTC.
+```json
+{
+  "type": "StatusChanged",
+  "occurredAt": "2026-11-11T09:30:00Z",
+  "fromStatus": "Pågående",
+  "toStatus": "Väntar på kund"
+}
+```
+
+`type` är `Created` eller `StatusChanged`. `fromStatus` och `toStatus` är svenska etiketter, inte enum-värden: `Nytt`, `Pågående`, `Väntar på kund`, `Avslutat`. `occurredAt` är serverns tid i UTC.
+
+`PUT /tickets/{id}/status` skapar en `StatusChanged`-händelse när en annan status sparas, i samma transaktion som statusändringen. Samma status igen, avvisade anrop och okända ärenden skapar ingen händelse. Äldre statusändringar rekonstrueras inte.
 
 ## Endpoints
 

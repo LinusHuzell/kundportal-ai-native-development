@@ -1,7 +1,7 @@
 # Spec: Visa ärende och ändra status
 
 Ägare: Linus
-Senast uppdaterad: 2026-11-10
+Senast uppdaterad: 2026-11-12
 
 Se [avgränsningar](../avgränsningar.md) och [arbetssätt](../arbetssätt.md).
 
@@ -20,6 +20,7 @@ Handläggaren väljer ett ärende på startsidan och ser dess uppgifter i panele
 - Val av ärende och presentation på `/tickets`.
 - Ändra ärendets status från den valda ärendepanelen.
 - Visa historik i den valda ärendepanelen.
+- Spåra faktiska statusändringar i ärendehistoriken enligt [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
 - Omdirigera äldre länkar till `/tickets/{id}` till listan och välja ärendet om det finns.
 - Befintliga backend-endpoints och statusregler.
 - Full skapandetid på ärenderadens datum vid hover och tangentbordsfokus.
@@ -28,13 +29,13 @@ Handläggaren väljer ett ärende på startsidan och ser dess uppgifter i panele
 
 - En separat detaljsida för `/tickets/{id}`.
 - Redigera ärendets övriga fält eller radera ärenden.
-- Händelser för statusändringar eller redigering.
+- Händelser för redigering. Statusändringshändelser ingår enligt [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
 
 ## Användare och förutsättningar
 
 - **Användare/roll:** Handläggare.
 - **Förutsättningar:** Startsidan kan hämta ärendelistan.
-- **Beroenden:** [Ärendehistorik](ärendehistorik-presentation-detaljvy.md), [API-kontrakt](../api/kontrakt.md).
+- **Beroenden:** [Ärendehistorik](ärendehistorik-presentation-detaljvy.md), [Ärendehistorik för statusändringar](ärendehistorik-statusändringar.md), [API-kontrakt](../api/kontrakt.md).
 
 ## Beslut
 
@@ -44,6 +45,7 @@ Handläggaren väljer ett ärende på startsidan och ser dess uppgifter i panele
 - Knappen "Spara status" har en dekorativ diskettikon före texten.
 - "Nytt" visas i statuslistan men går inte att välja.
 - Äldre `/tickets/{id}`-länkar väljer ärendet om det finns i listan. Om det saknas används listans normala val.
+- Spårningen av statusändringar ändrar inte befintliga statusvalideringar, statusvärden eller felbeteenden; detaljerna ägs av [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
 
 ## Visning
 
@@ -212,3 +214,4 @@ Manuell kontroll: tangentbord och skärmläsare för fokus och live-meddelanden.
 | Datum | Ändring | Ansvarig |
 |---|---|---|
 | 2026-11-10 | AK-23–25: lång lokal tidsstämpel som tillgänglig tooltip i listan, enligt användarens godkännande | GitHub Copilot |
+| 2026-11-12 | Uppdaterade scope och beroenden så att statusändringar spåras enligt den separata statusändringsspecen; befintliga statusregler lämnades oförändrade | Sebastian |

@@ -1,10 +1,28 @@
+using System.Text.Json.Serialization;
+
 using CustomerService.Api.Data;
 
 using Microsoft.EntityFrameworkCore;
 
 namespace CustomerService.Api.Features.Tickets;
 
-public record TicketHistoryEventResponse(TicketEventType Type, DateTimeOffset OccurredAt);
+public record TicketHistoryEventResponse(
+    TicketEventType Type,
+    DateTimeOffset OccurredAt,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? FromStatus = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ToStatus = null);
+
+public static class TicketStatusLabels
+{
+    public static string? For(TicketStatus? status) => status switch
+    {
+        TicketStatus.New => "Nytt",
+        TicketStatus.InProgress => "Pågående",
+        TicketStatus.WaitingForCustomer => "Väntar på kund",
+        TicketStatus.Closed => "Avslutat",
+        _ => null,
+    };
+}
 
 public static class GetTicketHistory
 {
@@ -27,9 +45,12 @@ public static class GetTicketHistory
             .Where(ticketEvent => ticketEvent.TicketId == id)
             .OrderByDescending(ticketEvent => ticketEvent.OccurredAt)
             .ThenByDescending(ticketEvent => ticketEvent.Id)
-            .Select(ticketEvent => new TicketHistoryEventResponse(ticketEvent.Type, ticketEvent.OccurredAt))
             .ToListAsync(cancellationToken);
 
-        return Results.Ok(history);
+        return Results.Ok(history.Select(ticketEvent => new TicketHistoryEventResponse(
+            ticketEvent.Type,
+            ticketEvent.OccurredAt,
+            TicketStatusLabels.For(ticketEvent.FromStatus),
+            TicketStatusLabels.For(ticketEvent.ToStatus))));
     }
 }
