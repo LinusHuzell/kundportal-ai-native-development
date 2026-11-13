@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 
 using CustomerService.Api.Data;
 
@@ -11,57 +10,36 @@ namespace CustomerService.Api.Features.Tickets;
 // instead of a JSON error. The attributes only document the contract in OpenAPI;
 // CreateTicketValidator enforces the rules.
 public record CreateTicketRequest(
-    [property: Required, MaxLength(200)] string? Title,
-    [property: Required, MaxLength(5000)] string? Description,
+    [property: Required, MaxLength(Ticket.TitleMaxLength)] string? Title,
+    [property: Required, MaxLength(Ticket.DescriptionMaxLength)] string? Description,
     [property: Required] string? Category,
     [property: Required] string? Priority,
     [property: Required] string? CustomerName,
     [property: Required] string? CustomerEmail);
 
-// Rules and messages come from the Felfall table in docs/specs/registrera-ärende.md.
-public static partial class CreateTicketValidator
+// Every field is required, so every rule runs, also for a missing (null) field.
+// The rules themselves are in TicketFieldRules.
+public static class CreateTicketValidator
 {
     public static Dictionary<string, string[]> Validate(CreateTicketRequest request)
     {
         var errors = new Dictionary<string, string[]>();
 
-        void Add(string field, string message) => errors[field] = [message];
+        void Check(string field, string? message)
+        {
+            if (message is not null)
+                errors[field] = [message];
+        }
 
-        if (string.IsNullOrWhiteSpace(request.Title))
-            Add("title", "Rubrik måste fyllas i");
-        else if (request.Title.Length > 200)
-            Add("title", "Rubrik får vara högst 200 tecken");
-
-        if (string.IsNullOrWhiteSpace(request.Description))
-            Add("description", "Beskrivning måste fyllas i");
-        else if (request.Description.Length > 5000)
-            Add("description", "Beskrivning får vara högst 5000 tecken");
-
-        if (!IsEnumName<TicketCategory>(request.Category))
-            Add("category", "Välj en kategori");
-
-        if (!IsEnumName<TicketPriority>(request.Priority))
-            Add("priority", "Välj en prioritet");
-
-        if (string.IsNullOrWhiteSpace(request.CustomerName))
-            Add("customerName", "Namn måste fyllas i");
-
-        if (string.IsNullOrWhiteSpace(request.CustomerEmail))
-            Add("customerEmail", "E-postadress måste fyllas i");
-        else if (!EmailFormat().IsMatch(request.CustomerEmail))
-            Add("customerEmail", "Ange en giltig e-postadress");
+        Check("title", TicketFieldRules.Title(request.Title));
+        Check("description", TicketFieldRules.Description(request.Description));
+        Check("category", TicketFieldRules.Category(request.Category));
+        Check("priority", TicketFieldRules.Priority(request.Priority));
+        Check("customerName", TicketFieldRules.CustomerName(request.CustomerName));
+        Check("customerEmail", TicketFieldRules.CustomerEmail(request.CustomerEmail));
 
         return errors;
     }
-
-    // Exact, case-sensitive name match. Enum.TryParse would also accept "1" and "Low, High".
-    private static bool IsEnumName<TEnum>(string? value) where TEnum : struct, Enum =>
-        value is not null && Enum.GetNames<TEnum>().Contains(value);
-
-    // The spec regex, with \z instead of $: in .NET, $ also matches before a trailing newline,
-    // which JavaScript (the frontend) does not.
-    [GeneratedRegex(@"^[^\s@]+@[^\s@]+\.[^\s@]+\z")]
-    private static partial Regex EmailFormat();
 }
 
 public static class CreateTicket

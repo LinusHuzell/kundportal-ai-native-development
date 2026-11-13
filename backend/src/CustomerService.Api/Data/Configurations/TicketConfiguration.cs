@@ -17,10 +17,10 @@ public sealed class TicketConfiguration : IEntityTypeConfiguration<Ticket>
             .IsUnique();
 
         builder.Property(ticket => ticket.Title)
-            .HasMaxLength(200)
+            .HasMaxLength(Ticket.TitleMaxLength)
             .IsRequired();
         builder.Property(ticket => ticket.Description)
-            .HasMaxLength(5000)
+            .HasMaxLength(Ticket.DescriptionMaxLength)
             .IsRequired();
         builder.Property(ticket => ticket.Category)
             .HasConversion<string>()

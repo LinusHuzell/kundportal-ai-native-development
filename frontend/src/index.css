@@ -9,3 +9,11 @@
 	--color-copy-dim: #b8c4d2;
 	--color-line: rgb(170 182 197 / 15%);
 }
+
+@layer base {
+	html,
+	body {
+		background-color: var(--color-portal);
+		color-scheme: dark;
+	}
+}

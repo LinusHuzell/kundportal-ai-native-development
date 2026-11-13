@@ -273,13 +273,13 @@ export default function CreateTicketDrawer({ onClose, onSaved }: Props) {
 
         <div>
           {label('customerName', 'Namn')}
-          <input type="text" autoComplete="name" {...fieldProps('customerName')} />
+          <input type="text" autoComplete="off" {...fieldProps('customerName')} />
           {errorText('customerName')}
         </div>
 
         <div>
           {label('customerEmail', 'E-postadress')}
-          <input type="email" autoComplete="email" {...fieldProps('customerEmail')} />
+          <input type="email" autoComplete="off" {...fieldProps('customerEmail')} />
           {errorText('customerEmail')}
         </div>
 

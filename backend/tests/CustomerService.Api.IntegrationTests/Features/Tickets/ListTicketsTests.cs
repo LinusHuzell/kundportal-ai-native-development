@@ -22,8 +22,8 @@ public class ListTicketsTests(ApiFixture fixture) : IntegrationTest(fixture)
                     Category = TicketCategory.Other,
                     Priority = TicketPriority.Low,
                     Status = TicketStatus.New,
-                    CustomerName = "Anna Andersson",
-                    CustomerEmail = "anna@example.com",
+                    CustomerName = "Older customer",
+                    CustomerEmail = "older@example.com",
                     CreatedAt = new DateTimeOffset(2026, 10, 1, 10, 0, 0, TimeSpan.Zero),
                 },
                 new Ticket
@@ -34,8 +34,8 @@ public class ListTicketsTests(ApiFixture fixture) : IntegrationTest(fixture)
                     Category = TicketCategory.Invoices,
                     Priority = TicketPriority.High,
                     Status = TicketStatus.InProgress,
-                    CustomerName = "Anna Andersson",
-                    CustomerEmail = "anna@example.com",
+                    CustomerName = "Newer customer",
+                    CustomerEmail = "newer@example.com",
                     CreatedAt = new DateTimeOffset(2026, 11, 1, 10, 0, 0, TimeSpan.Zero),
                 });
             await dbContext.SaveChangesAsync();

@@ -562,23 +562,15 @@
             ]
           },
           "category": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/TicketCategory"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           },
           "priority": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/TicketPriority"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           },
           "customerName": {

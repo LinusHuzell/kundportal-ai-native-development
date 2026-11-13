@@ -9,8 +9,8 @@ import type {
 } from '../types/ticket.ts'
 
 /**
- * API client. listTickets, createTicket, getTicket, getTicketHistory and updateTicketStatus follow
- * docs/api/kontrakt.md; the other methods are still stubs.
+ * API client. listTickets, createTicket, getTicket, getTicketHistory, updateTicket and
+ * updateTicketStatus follow docs/api/kontrakt.md.
  * Base URL is configured via VITE_API_BASE_URL (see .env.example).
  */
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
@@ -38,10 +38,6 @@ export class ApiError extends Error {
     this.status = status
     this.fieldErrors = fieldErrors
   }
-}
-
-const notImplemented = (name: string): never => {
-  throw new ApiError(`${name}: API contract not defined yet`, 501)
 }
 
 /** The first message per field, or undefined when the body has no errors. */
@@ -89,8 +85,12 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     }),
-  updateTicket: async (_id: number, _input: UpdateTicketInput): Promise<Ticket> =>
-    notImplemented('updateTicket'),
+  updateTicket: (id: number, input: UpdateTicketInput): Promise<Ticket> =>
+    request<Ticket>(`/tickets/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    }),
   updateTicketStatus: (id: number, status: TicketStatus): Promise<Ticket> =>
     request<Ticket>(`/tickets/${id}/status`, {
       method: 'PUT',
