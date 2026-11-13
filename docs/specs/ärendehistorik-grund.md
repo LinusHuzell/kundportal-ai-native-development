@@ -5,7 +5,7 @@ Senast uppdaterad: 2026-11-10
 
 ## Sammanfattning
 
-En handläggare ska i startsidans valda ärendepanel kunna se vad som har hänt med ärendet och när. Den här specen loggar bara att ärendet registrerades. Statusändring och redigering hör till en kommande spec. Historiken är en enkel, skrivskyddad händelselogg.
+En handläggare ska i startsidans valda ärendepanel kunna se vad som har hänt med ärendet och när. Den här grundspecen beskriver registreringshändelsen (`Created`). Spårning av statusändringar utökas i [specifikationen för statusändringar](ärendehistorik-statusändringar.md); redigering ingår inte. Historiken är en enkel, skrivskyddad händelselogg.
 
 Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
 
@@ -13,11 +13,11 @@ Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
 
 - Handläggaren kan se att och när ett ärende registrerades, i den valda ärendepanelen på startsidan.
 - Historiken finns kvar efter omstart av applikationen.
-- Modellen kan utökas med fler händelsetyper utan att befintlig data eller API ändras.
+- Modellen kan utökas med fler händelsetyper utan att befintlig historikdata går förlorad; API-utökningar beskrivs i respektive händelsespecifikation.
 
 ## Ingår
 
-- En händelsetyp: ärendet registrerades (`Created`).
+- Grundfunktionen skapar händelsetypen `Created`; statusändringar hanteras i [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
 - Backend skapar händelsen automatiskt när ett ärende registreras.
 - Endpoint som returnerar ett ärendes historik, som en lista.
 - Frontend: lista med händelser i den valda ärendepanelen på startsidan.
@@ -26,7 +26,7 @@ Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
 
 ## Ingår inte
 
-- Händelser för statusändring och redigering. De beskrivs i en egen spec när det finns stöd för att uppdatera status.
+- Statusändringshändelser ingår inte i grundfunktionens leverans; de specificeras i [specifikationen för statusändringar](ärendehistorik-statusändringar.md). Händelser för redigering ingår inte.
 - Versionshistorik: vilka fält som ändrades och deras gamla och nya värden (se [avgränsningar](../avgränsningar.md)).
 - Vem som gjorde ändringen, eftersom inloggning saknas.
 - Kommentarer, anteckningar och manuella händelser.
@@ -45,7 +45,7 @@ Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
 | Begrepp/fält | Betydelse | Tillåtna värden eller källa |
 |---|---|---|
 | Händelse | En post i ett ärendes historik | Skapas bara av backend |
-| `type` | Vilken sorts händelse | `Created`. Fler värden läggs till senare |
+| `type` | Vilken sorts händelse | `Created` i grundfunktionen; `StatusChanged` definieras i [specifikationen för statusändringar](ärendehistorik-statusändringar.md) |
 | `occurredAt` | När händelsen inträffade, serverns tid i UTC | ISO 8601 |
 
 ## Regler och fel
@@ -130,7 +130,7 @@ Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
   ]
   ```
 
-  Om ärendet saknar händelser är svaret en tom lista (`[]`).
+  Om ärendet saknar händelser är svaret en tom lista (`[]`). Svarsfält för `StatusChanged` beskrivs i [specifikationen för statusändringar](ärendehistorik-statusändringar.md).
 
 - **Fel:** `404` `problem+json` utan `errors` om ärendet inte finns.
 - **Beständighet:** Händelserna sparas i en egen tabell kopplad till ärendet, finns kvar efter omstart och raderas när ärendet raderas.
@@ -150,6 +150,7 @@ Arbetssättet beskrivs i [arbetssätt](../arbetssätt.md).
 | D-2 | Nyast först | Samma ordning som ärendelistan. Behövs när fler händelser finns | Sebastian | Beslutat |
 | D-3 | Ärendet och händelsen sparas i samma transaktion | Annars kan historiken och ärendet bli osynkade | Sebastian | Beslutat |
 | D-4 | Historiken raderas när ärendet raderas | Historik utan ärende saknar värde och skulle bryta främmande nyckeln | Sebastian | Beslutat |
+| D-5 | Den här specen fortsätter vara grundspecifikation för `Created`; statusändringar har en separat normerande spec | Bevarar ursprungliga acceptanskriterier och ger utökningen en tydlig källa | Sebastian | Beslutat |
 
 ## Öppna frågor
 
@@ -178,6 +179,7 @@ Följ projektets [teststrategi](../teststrategi.md).
 - [Avgränsningar](../avgränsningar.md)
 - [API-kontrakt](../api/kontrakt.md)
 - [Registrera ärende](registrera-ärende.md)
+- [Ärendehistorik för statusändringar](ärendehistorik-statusändringar.md)
 
 ## Ändringshistorik
 
@@ -186,3 +188,4 @@ Följ projektets [teststrategi](../teststrategi.md).
 | 2026-11-10 | Första utkast. Avgränsat till registrering, omdöpt till "grund" | Sebastian |
 | 2026-11-10 | Beslutade att historiken raderas med ärendet och lade till AK-8 | Sebastian |
 | 2026-11-10 | Lade till AK-9: tom lista för ärende utan händelser | Sebastian |
+| 2026-11-12 | D-5: Behöll grundspecen som normerande källa för `Created` och hänvisade statusändringar till den separata utökningsspecen | Sebastian |

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+
 using CustomerService.Api.Data;
 
 namespace CustomerService.Api.Features.Tickets;
@@ -50,8 +51,21 @@ public static class UpdateTicketStatus
             return Results.Problem(statusCode: StatusCodes.Status404NotFound);
         }
 
-        ticket.Status = Enum.Parse<TicketStatus>(request.Status!);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        var newStatus = Enum.Parse<TicketStatus>(request.Status!);
+        if (newStatus != ticket.Status)
+        {
+            dbContext.TicketEvents.Add(new TicketEvent
+            {
+                TicketId = ticket.Id,
+                Type = TicketEventType.StatusChanged,
+                OccurredAt = DateTimeOffset.UtcNow,
+                FromStatus = ticket.Status,
+                ToStatus = newStatus,
+            });
+            ticket.Status = newStatus;
+            // One SaveChanges is one transaction, so status and event are saved together.
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         return Results.Ok(TicketResponse.From(ticket));
     }

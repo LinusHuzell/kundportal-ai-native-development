@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+
 using CustomerService.Api.Data;
 using CustomerService.Api.Features.Tickets;
 
@@ -21,6 +22,8 @@ public class ListTicketsTests(ApiFixture fixture) : IntegrationTest(fixture)
                     Category = TicketCategory.Other,
                     Priority = TicketPriority.Low,
                     Status = TicketStatus.New,
+                    CustomerName = "Anna Andersson",
+                    CustomerEmail = "anna@example.com",
                     CreatedAt = new DateTimeOffset(2026, 10, 1, 10, 0, 0, TimeSpan.Zero),
                 },
                 new Ticket
@@ -31,6 +34,8 @@ public class ListTicketsTests(ApiFixture fixture) : IntegrationTest(fixture)
                     Category = TicketCategory.Invoices,
                     Priority = TicketPriority.High,
                     Status = TicketStatus.InProgress,
+                    CustomerName = "Anna Andersson",
+                    CustomerEmail = "anna@example.com",
                     CreatedAt = new DateTimeOffset(2026, 11, 1, 10, 0, 0, TimeSpan.Zero),
                 });
             await dbContext.SaveChangesAsync();

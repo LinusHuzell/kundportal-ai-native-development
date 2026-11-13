@@ -50,6 +50,7 @@ export default function TicketListPage() {
       : null,
   )
   const [selectedTicketResult, setSelectedTicketResult] = useState<SelectedTicketResult>()
+  const [historyVersion, setHistoryVersion] = useState(0)
   const [hoveredDateId, setHoveredDateId] = useState<number | null>(null)
   const [focusedRowId, setFocusedRowId] = useState<number | null>(null)
   const [dismissedTimestampId, setDismissedTimestampId] = useState<number | null>(null)
@@ -115,6 +116,10 @@ export default function TicketListPage() {
   const selectedTicket = currentTicketResult?.status === 'loaded' ? currentTicketResult.ticket : null
 
   const handleStatusSaved = (updatedTicket: Ticket) => {
+    // Saving the same status is a no-op on the server and creates no history event.
+    if (selectedTicket?.id === updatedTicket.id && selectedTicket.status !== updatedTicket.status) {
+      setHistoryVersion((version) => version + 1)
+    }
     setSelectedTicketResult({ id: updatedTicket.id, status: 'loaded', ticket: updatedTicket })
     setState((current) =>
       current.status === 'loaded'
@@ -294,7 +299,7 @@ export default function TicketListPage() {
                     onSaved={handleStatusSaved}
                   />
                 </section>
-                <TicketHistory ticketId={selectedTicket.id} />
+                <TicketHistory ticketId={selectedTicket.id} refreshKey={historyVersion} />
               </>
             )}
           </TicketDetailsPanel>

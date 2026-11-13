@@ -3,7 +3,7 @@ import { api } from '../../api/client'
 import { formatCreatedAt } from './formatCreatedAt'
 import { TICKET_HISTORY_EVENT_LABELS, type TicketHistoryEvent } from '../../types/ticket'
 
-type HistoryResult = { id: number } & (
+type HistoryResult = { id: number; refreshKey: number } & (
   | { kind: 'loaded'; events: TicketHistoryEvent[] }
   | { kind: 'failed' }
 )
@@ -12,34 +12,59 @@ const LOAD_FAILED = 'Historiken kunde inte hämtas. Försök igen.'
 const EMPTY_HISTORY = 'Det finns inga händelser för ärendet.'
 const headingClass = 'text-xs font-semibold tracking-wider text-[#AAB6C5] uppercase'
 
-export default function TicketHistory({ ticketId }: { ticketId: number }) {
+function describeEvent(event: TicketHistoryEvent): string | undefined {
+  if (event.type === 'StatusChanged') {
+    return event.fromStatus && event.toStatus
+      ? `Förändrad status: ${event.fromStatus} -> ${event.toStatus}`
+      : undefined
+  }
+  return TICKET_HISTORY_EVENT_LABELS[event.type]
+}
+
+export default function TicketHistory({
+  ticketId,
+  refreshKey = 0,
+}: {
+  ticketId: number
+  refreshKey?: number
+}) {
   const [result, setResult] = useState<HistoryResult>()
-  const requestRef = useRef<{ id: number; promise: Promise<TicketHistoryEvent[]> } | null>(null)
+  const requestRef = useRef<{
+    id: number
+    refreshKey: number
+    promise: Promise<TicketHistoryEvent[]>
+  } | null>(null)
 
   useEffect(() => {
     let current = true
     let request = requestRef.current
-    if (request?.id !== ticketId) {
-      request = { id: ticketId, promise: api.getTicketHistory(ticketId) }
+    if (request?.id !== ticketId || request.refreshKey !== refreshKey) {
+      request = { id: ticketId, refreshKey, promise: api.getTicketHistory(ticketId) }
       requestRef.current = request
     }
     request.promise.then(
       (events) => {
-        if (current) setResult({ id: ticketId, kind: 'loaded', events })
+        if (current) setResult({ id: ticketId, refreshKey, kind: 'loaded', events })
       },
       () => {
-        if (current) setResult({ id: ticketId, kind: 'failed' })
+        if (current) setResult({ id: ticketId, refreshKey, kind: 'failed' })
       },
     )
     return () => {
       current = false
     }
-  }, [ticketId])
+  }, [ticketId, refreshKey])
 
-  const state = result?.id === ticketId ? result : { kind: 'loading' as const }
+  const state =
+    result?.id === ticketId && result.refreshKey === refreshKey
+      ? result
+      : { kind: 'loading' as const }
   const events =
     state.kind === 'loaded'
-      ? state.events.filter((event) => TICKET_HISTORY_EVENT_LABELS[event.type] !== undefined)
+      ? state.events.flatMap((event) => {
+          const label = describeEvent(event)
+          return label === undefined ? [] : [{ event, label }]
+        })
       : []
 
   return (
@@ -64,21 +89,17 @@ export default function TicketHistory({ ticketId }: { ticketId: number }) {
       )}
       {state.kind === 'loaded' && events.length > 0 && (
         <ul className="mt-4 divide-y divide-white/10 text-sm">
-          {events.map((event, index) => {
-            const label = TICKET_HISTORY_EVENT_LABELS[event.type]
-            if (!label) return null
-            return (
-              <li
-                key={`${event.type}-${event.occurredAt}-${index}`}
-                className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <span>{label}</span>
-                <time dateTime={new Date(event.occurredAt).toISOString()} className="text-[#AAB6C5]">
-                  {formatCreatedAt(event.occurredAt)}
-                </time>
-              </li>
-            )
-          })}
+          {events.map(({ event, label }, index) => (
+            <li
+              key={`${event.type}-${event.occurredAt}-${index}`}
+              className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <span>{label}</span>
+              <time dateTime={new Date(event.occurredAt).toISOString()} className="text-[#AAB6C5]">
+                {formatCreatedAt(event.occurredAt)}
+              </time>
+            </li>
+          ))}
         </ul>
       )}
     </section>
